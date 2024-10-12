@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Log;
+
 class PermissionController extends Controller
 {
     public function __construct()
@@ -25,9 +26,14 @@ class PermissionController extends Controller
     public function index()
     {
         $permissions = Permission::all();
-        return view('role-permission.permission.index', ['permissions' => $permissions]);
+        // return view('role-permission.permission.index', ['permissions' => $permissions]);
         // return response()->json($permissions);
+        Log::info('Request received', ['user_id' => auth()->id()]);
 
+        return response()->json([
+            'success' => true,
+            'data' => $permissions
+        ], 200);
         // $permissions = Permission::all();
         // return response()->json(['permissions' => $permissions], 200);
         // return response()->json(['permissions' => ['view', 'edit', 'delete']]);
@@ -55,7 +61,7 @@ class PermissionController extends Controller
             'name' => $request->name
         ]);
 
-        return redirect('permissions')->with('status','Permission Created Successfully');
+        return redirect('permissions')->with('status', 'Permission Created Successfully');
     }
 
     public function edit(Permission $permission)
@@ -69,7 +75,7 @@ class PermissionController extends Controller
             'name' => [
                 'required',
                 'string',
-                'unique:permissions,name,'.$permission->id
+                'unique:permissions,name,' . $permission->id
             ]
         ]);
 
@@ -77,13 +83,13 @@ class PermissionController extends Controller
             'name' => $request->name
         ]);
 
-        return redirect('permissions')->with('status','Permission Updated Successfully');
+        return redirect('permissions')->with('status', 'Permission Updated Successfully');
     }
 
     public function destroy($permissionId)
     {
         $permission = Permission::find($permissionId);
         $permission->delete();
-        return redirect('permissions')->with('status','Permission Deleted Successfully');
+        return redirect('permissions')->with('status', 'Permission Deleted Successfully');
     }
 }

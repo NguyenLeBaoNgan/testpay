@@ -46,5 +46,8 @@ class User extends Authenticatable
     ];
 
 
-
+    public function getAllPermissionsAttribute()
+    {
+        return $this->getAllPermissions()->pluck('name');
+    }
 }
