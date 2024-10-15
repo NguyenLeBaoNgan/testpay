@@ -42,10 +42,10 @@ class PermissionController extends Controller
         // return view('role-permission.permission.index', ['permissions' => $permissions]);
     }
 
-    public function create()
-    {
-        return view('role-permission.permission.create');
-    }
+    // public function create()
+    // {
+    //     return view('role-permission.permission.create');
+    // }
 
     public function store(Request $request)
     {
@@ -57,39 +57,48 @@ class PermissionController extends Controller
             ]
         ]);
 
-        Permission::create([
-            'name' => $request->name
+        $permission = Permission::create([
+            'name' => $request->name,
+            'guard_name' => 'web',
         ]);
-
-        return redirect('permissions')->with('status', 'Permission Created Successfully');
+        Log::info('Created permission: ', ['permission' => $permission]);
+        return response()->json($permission, 201);
     }
 
-    public function edit(Permission $permission)
-    {
-        return view('role-permission.permission.edit', ['permission' => $permission]);
-    }
+    // public function edit(Permission $permission)
+    // {
+    //     return view('role-permission.permission.edit', ['permission' => $permission]);
+    // }
 
-    public function update(Request $request, Permission $permission)
+    public function update(Request $request, $id)
     {
+        $permission = Permission::findOrFail($id);
+
         $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'unique:permissions,name,' . $permission->id
-            ]
+            'name' => 'required|string|unique:permissions,name,' . $permission->id . '|max:255',
         ]);
 
-        $permission->update([
-            'name' => $request->name
-        ]);
+        $permission->name = $request->name;
+        $permission->save();
 
-        return redirect('permissions')->with('status', 'Permission Updated Successfully');
+        Log::info('Updated permission: ', ['permission' => $permission]);
+
+        return response()->json($permission);
     }
 
-    public function destroy($permissionId)
+    public function destroy($id)
     {
-        $permission = Permission::find($permissionId);
-        $permission->delete();
-        return redirect('permissions')->with('status', 'Permission Deleted Successfully');
+        try {
+            $permission = Permission::findOrFail($id);
+            $permission->delete();
+
+            Log::info('Deleted permission: ', ['id' => $id]);
+
+            return response()->json(['message' => 'Permission deleted successfully.']);
+        } catch (\Exception $e) {
+            Log::error('Error deleting permission: ', ['id' => $id, 'error' => $e->getMessage()]);
+            return response()->json(['message' => 'Error deleting permission.'], 500);
+        }
     }
+
 }

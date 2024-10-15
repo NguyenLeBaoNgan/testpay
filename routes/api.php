@@ -18,6 +18,9 @@ use App\Http\Controllers\Auth\LoginController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     Route::get('/permissions', [PermissionController::class, 'index']);
+    Route::post('/permissions', [PermissionController::class, 'store']);
+    Route::put('/permissions/{id}', [PermissionController::class, 'update']);
+    Route::delete('/permissions/{id}', [PermissionController::class, 'destroy']);
 });
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -30,15 +33,19 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 
-// Route::middleware('auth:sanctum')->group(function () {
-// Route::post('/logout', [UserController::class, 'logout']);
-// });
 Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logout']);
 
-Route::middleware(['auth:sanctum', 'role:superadmin|admin'])->group(function () {
+
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
-    Route::post('/users', [UserController::class, 'store']);
-    Route::put('/users/{user}', [UserController::class, 'update']);
-    Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    Route::put('/user/{id}', [UserController::class, 'update']);
 });
-Route::middleware(['auth:sanctum', 'role:admin|superadmin'])->put('/user/{id}', [UserController::class, 'update']);
+
+Route::middleware(['auth:sanctum', 'role:admin|superadmin'])->group(function () {
+
+    Route::post('/users/{id}/role', [UserController::class, 'updateUserRole']);
+    Route::delete('/user/{id}', [UserController::class, 'destroy']);
+
+});
+Route::middleware(['auth:sanctum', 'role:superadmin'])->put('/user/{id}/permissions', [UserController::class, 'updatePermissions']);
+
