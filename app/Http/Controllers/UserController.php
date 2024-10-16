@@ -14,13 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:view user', ['only' => ['index']]);
-        $this->middleware('permission:create user', ['only' => ['create', 'store']]);
-        $this->middleware('permission:update user', ['only' => ['update', 'edit']]);
-        $this->middleware('permission:delete user', ['only' => ['destroy']]);
-    }
 
     public function index()
     {
@@ -194,4 +187,8 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Unauthorized'], 403);
     }
+
+
+    //test
+
 }
