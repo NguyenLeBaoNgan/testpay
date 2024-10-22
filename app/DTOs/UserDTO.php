@@ -3,14 +3,25 @@
 namespace App\DTOs;
 
 use App\Models\User;
-
-class UserDTO
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Attributes\Validation\Required;
+use Spatie\LaravelData\Attributes\Validation\ArrayType;
+class UserDTO extends Data
 {
     public function __construct(
-        public int $id,
+        #[Required]
         public string $name,
+
+        #[Required]
         public string $email,
-        public array $roles,
-        public array $permissions
+
+        #[Required]
+        public string $password,
+
+        #[ArrayType]
+        public array $roles=[],
+
+        #[ArrayType]
+        public array $permissions=[]
     ) {}
 }

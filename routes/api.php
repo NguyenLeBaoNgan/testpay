@@ -32,7 +32,9 @@ Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logo
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
+    Route::get('/user/{id}', [UserController::class, 'show']);
     Route::put('/user/{id}', [UserController::class, 'update']);
+    
 });
 
 Route::middleware(['auth:sanctum', 'role:admin|superadmin'])->group(function () {

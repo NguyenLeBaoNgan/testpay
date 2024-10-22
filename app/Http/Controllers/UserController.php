@@ -21,51 +21,39 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    public function store(Request $request)
+    public function store(UserDTO $userDTO)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|max:20',
-            'roles' => 'required'
-        ]);
-
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $userDTO->name,
+            'email' => $userDTO->email,
+            'password' => Hash::make($userDTO->password),
         ]);
 
-        $user->assignRole($request->roles);
+        $user->assignRole($userDTO->roles);
 
         return response()->json($user, 201);
     }
 
 
-    public function update(Request $request,  $id)
+    public function update(UserDTO $userDTO,  $id)
     {
         $user = User::findOrFail($id);
-        Log::info('Updating user: ', ['id' => $id, 'request_data' => $request->all()]);
-        $request->validate([
-            'name' => 'nullable|string|max:255',
-            'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|max:20',
-            'roles' => 'nullable|array'
-        ]);
+        Log::info('Updating user: ', ['id' => $id, 'request_data' => $userDTO->all()]);
 
-        if ($request->has('name')) {
-            $user->name = $request->name;
+
+        if ($userDTO->name) {
+            $user->name = $userDTO->name;
         }
-        if ($request->has('email')) {
-            $user->email = $request->email;
+        if ($userDTO->email) {
+            $user->email = $userDTO->email;
         }
 
-        if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+        if ($userDTO->password) {
+            $user->password = Hash::make($userDTO->password);
         }
 
-        if ($request->has('roles')) {
-            $user->syncRoles($request->roles);
+        if ($userDTO->roles) {
+            $user->syncRoles($userDTO->roles);
         }
 
         $user->save();
@@ -76,7 +64,14 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
-        if (Auth::user()->hasRole('admin|superadmin')) {
+        Log::info('Attempting to delete user: ', [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            // Thêm các thông tin khác nếu cần
+        ]);
+
+        if (Auth::user()->hasRole('admin|super-admin')) {
             $user->delete();
             Log::info('User deleted successfully: ', ['id' => $id]);
 
@@ -88,16 +83,23 @@ class UserController extends Controller
 
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        $userDTO = new UserDTO(
-            $user->id,
-            $user->name,
-            $user->email,
-            $user->getRoleNames()->toArray(),
-            $user->getAllPermissions()->toArray()
-        );
-
-        return response()->json($userDTO);
+        $user = User::with('roles.permissions')->findOrFail($id);
+        // $userDTO = new UserDTO(
+        //     $user->id,
+        //     $user->name,
+        //     $user->email,
+        //     $user->getRoleNames()->toArray(),
+        //     $user->getAllPermissions()->toArray()
+        // );
+        $permissions = $user->roles->flatMap(function ($role) {
+            return $role->permissions;
+        })->unique('id');
+        return response()->json([
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->roles,
+            'permissions' => $permissions,
+        ]);
     }
 
     public function assignRole(Request $request, $id)
@@ -116,20 +118,16 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Role assigned successfully']);
     }
-    public function register(Request $request)
+    public function register(UserDTO $userDTO)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-
-        ]);
-        Log::info('Registering user: ', $request->all());
+        Log::info('Registering user: ', (array) $userDTO);
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $userDTO->name,
+            'email' => $userDTO->email,
+            'password' => Hash::make($userDTO->password),
         ]);
+        Log::info('User ID: ' . $user->id);
+
         $user->assignRole('admin');
 
         $permissions = $user->getAllPermissions();
@@ -138,18 +136,14 @@ class UserController extends Controller
     }
 
 
-    public function login(Request $request)
+    public function login(UserDTO $userDTO)
     {
-        $request->validate([
-            'email' => 'required|string|email',
-            'password' => 'required|string',
-        ]);
-
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        Log::info('Attempting login for email: ', ['email' => $userDTO->email]);
+        if (!Auth::attempt(['email' => $userDTO->email, 'password' => $userDTO->password])) {
             return response()->json(['message' => 'Invalid login details'], 401);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = User::where('email', $userDTO->email)->firstOrFail();
         $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json([
             'token' => $token,

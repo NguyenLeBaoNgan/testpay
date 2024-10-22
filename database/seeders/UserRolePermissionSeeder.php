@@ -70,9 +70,9 @@ class UserRolePermissionSeeder extends Seeder
         $staffPermissions = ['view product', 'create product', 'update product', 'view user', 'create user', 'update user'];
         $staffRole->syncPermissions($staffPermissions);
 
-
+        $userRole = Role::firstOrCreate(['name' => 'user']);
         $userRole->syncPermissions(['view product', 'view user', 'update user']);
-
+       
 
         $superAdminUser = User::firstOrCreate(
             ['email' => 'superadmin@gmail.com'],
