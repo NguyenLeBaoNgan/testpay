@@ -1,11 +1,14 @@
 <?php
 namespace App\DTOs;
+use Spatie\LaravelData\Data;
+use Spatie\LaravelData\Attributes\Validation\Required;
 
-class CategoryDTO
+class CategoryDTO extends Data
 {
     public function __construct(
-        public int $id,
+
         public string $name,
-        public int $user_id
+        // public ?string $description,
+        public ?string $user_id ,
     ) {}
 }

@@ -2,20 +2,18 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Models\Permission;
+use App\Models\Role; 
 use App\Models\User;
-use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Database\Seeder;
 
 class UserRolePermissionSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-
         $permissions = [
             'view role',
             'create role',
@@ -35,22 +33,46 @@ class UserRolePermissionSeeder extends Seeder
             'delete product'
         ];
 
-
+        // Tạo quyền (permissions) trước
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            $perm = Permission::create([
+                'id' => (string) Str::ulid(),
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
+            Log::info("Permission created: {$perm->id} - {$perm->name}");
         }
 
-        $superAdminRole = Role::firstOrCreate(['name' => 'super-admin']);
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
-        $staffRole = Role::firstOrCreate(['name' => 'staff']);
-        $userRole = Role::firstOrCreate(['name' => 'user']);
 
+        // Tạo vai trò (roles)
+        $superAdminRole = Role::firstOrCreate(['name' => 'super-admin'], [
+            'id' => (string) Str::ulid(),
+            'guard_name' => 'web'
+        ]);
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], [
+            'id' => (string) Str::ulid(),
+            'guard_name' => 'web'
+        ]);
+        $staffRole = Role::firstOrCreate(['name' => 'staff'], [
+            'id' => (string) Str::ulid(),
+            'guard_name' => 'web'
+        ]);
+        $userRole = Role::firstOrCreate(['name' => 'user'], [
+            'id' => (string) Str::ulid(),
+            'guard_name' => 'web'
+        ]);
 
-        $allPermissionNames = Permission::pluck('name')->toArray();
-        $superAdminRole->syncPermissions($allPermissionNames);
+        Log::info("Super Admin Role ID: {$superAdminRole->id}");
+        Log::info("Admin Role ID: {$adminRole->id}");
+        Log::info("Staff Role ID: {$staffRole->id}");
+        Log::info("User Role ID: {$userRole->id}");
 
+        // Gán quyền cho super-admin
+        $superAdminRole->syncPermissions(Permission::all());
+        Log::info("Permissions for Super Admin Role: ", Permission::all()->pluck('name')->toArray());
 
-        $adminPermissions = [
+        // Gán quyền cho admin
+        $adminPermissions = Permission::whereIn('name', [
             'create role',
             'view role',
             'update role',
@@ -63,42 +85,45 @@ class UserRolePermissionSeeder extends Seeder
             'create product',
             'view product',
             'update product'
-        ];
+        ])->get();
         $adminRole->syncPermissions($adminPermissions);
-
-
-        $staffPermissions = ['view product', 'create product', 'update product', 'view user', 'create user', 'update user'];
+        Log::info("Permissions for Admin Role: ", $adminPermissions->pluck('name')->toArray());
+        // Gán quyền cho staff
+        $staffPermissions = Permission::whereIn('name', [
+            'view product',
+            'create product',
+            'update product',
+            'view user',
+            'create user',
+            'update user'
+        ])->get();
         $staffRole->syncPermissions($staffPermissions);
 
-        $userRole = Role::firstOrCreate(['name' => 'user']);
-        $userRole->syncPermissions(['view product', 'view user', 'update user']);
-       
+        // Gán quyền cho user
+        $userPermissions = Permission::whereIn('name', [
+            'view product',
+            'view user',
+            'update user'
+        ])->get();
+        $userRole->syncPermissions($userPermissions);
 
-        $superAdminUser = User::firstOrCreate(
-            ['email' => 'superadmin@gmail.com'],
-            [
-                'name' => 'Super Admin',
-                'password' => Hash::make('12345678'),
-            ]
-        );
+        // Tạo người dùng (users)
+        $superAdminUser = User::firstOrCreate(['email' => 'superadmin@gmail.com'], [
+            'name' => 'Super Admin',
+            'password' => Hash::make('12345678')
+        ]);
         $superAdminUser->assignRole($superAdminRole);
 
-        $adminUser = User::firstOrCreate(
-            ['email' => 'admin@gmail.com'],
-            [
-                'name' => 'Admin',
-                'password' => Hash::make('12345678'),
-            ]
-        );
+        $adminUser = User::firstOrCreate(['email' => 'admin@gmail.com'], [
+            'name' => 'Admin',
+            'password' => Hash::make('12345678')
+        ]);
         $adminUser->assignRole($adminRole);
 
-        $staffUser = User::firstOrCreate(
-            ['email' => 'staff@gmail.com'],
-            [
-                'name' => 'Staff',
-                'password' => Hash::make('12345678'),
-            ]
-        );
+        $staffUser = User::firstOrCreate(['email' => 'staff@gmail.com'], [
+            'name' => 'Staff',
+            'password' => Hash::make('12345678')
+        ]);
         $staffUser->assignRole($staffRole);
     }
 }

@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
-
     public function index()
     {
         $users = User::get();
@@ -41,18 +40,18 @@ class UserController extends Controller
         Log::info('Updating user: ', ['id' => $id, 'request_data' => $userDTO->all()]);
 
 
-        if ($userDTO->name) {
+        if (!empty($userDTO->name)) {
             $user->name = $userDTO->name;
         }
-        if ($userDTO->email) {
+        if (!empty($userDTO->email)) {
             $user->email = $userDTO->email;
         }
 
-        if ($userDTO->password) {
+        if (!empty($userDTO->password)) {
             $user->password = Hash::make($userDTO->password);
         }
 
-        if ($userDTO->roles) {
+        if (!empty($userDTO->roles)) {
             $user->syncRoles($userDTO->roles);
         }
 
@@ -64,14 +63,14 @@ class UserController extends Controller
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+        Log::info('User roles:', Auth::user()->getRoleNames()->toArray());
         Log::info('Attempting to delete user: ', [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            // Thêm các thông tin khác nếu cần
         ]);
 
-        if (Auth::user()->hasRole('admin|super-admin')) {
+        if (Auth::user()->hasAnyRole(['admin', 'super-admin'])) {
             $user->delete();
             Log::info('User deleted successfully: ', ['id' => $id]);
 
@@ -101,23 +100,6 @@ class UserController extends Controller
             'permissions' => $permissions,
         ]);
     }
-
-    public function assignRole(Request $request, $id)
-    {
-        $request->validate([
-            'role_name' => 'required|string|exists:roles,name',
-        ]);
-
-        $roleAssignmentDTO = new RoleDTO(
-            $id,
-            $request->role_name
-        );
-
-        $user = User::findOrFail($roleAssignmentDTO->userId);
-        $user->assignRole($roleAssignmentDTO->roleName);
-
-        return response()->json(['message' => 'Role assigned successfully']);
-    }
     public function register(UserDTO $userDTO)
     {
         Log::info('Registering user: ', (array) $userDTO);
@@ -132,7 +114,7 @@ class UserController extends Controller
 
         $permissions = $user->getAllPermissions();
         $permissionNames = $permissions->pluck('name')->toArray();
-        return response()->json(new UserDTO($user->id, $user->name, $user->email, roles: ['admin'], permissions: [$permissionNames]), 201);
+        return response()->json(new UserDTO($user->name, $user->email, $user->password, roles: ['admin'], permissions: [$permissionNames]), 201);
     }
 
 
@@ -153,36 +135,21 @@ class UserController extends Controller
 
 
 
-    public function logout(Request $request)
+    public function logout()
     {
         // Auth::logout();
-        $request->user()->tokens()->delete();
-        return response()->json(['message' => 'Logged out successfully']);
-    }
-
-
-    public function updateUserRole(Request $request, $id)
-    {
-
-        $request->validate([
-            'role' => 'required|string|exists:roles,name',
-        ]);
-
-
-        $user = User::findOrFail($id);
-
-
-        if (Auth::user()->hasRole(['admin', 'superadmin'])) {
-
-            $user->syncRoles([$request->role]);
-
-            return response()->json(['message' => 'User role updated successfully.']);
+        $user = Auth::user();
+        if ($user) {
+            Log::info('User logging out:', [
+                'id' => $user->id,
+                'email' => $user->email,
+                'name' => $user->name,
+            ]);
+            $user->tokens()->delete();
+            return response()->json(['message' => 'Logged out successfully']);
         }
 
-        return response()->json(['message' => 'Unauthorized'], 403);
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
-
-
-    //test
 
 }

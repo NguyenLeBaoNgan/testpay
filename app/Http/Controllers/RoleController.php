@@ -1,105 +1,139 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\DTOs\RoleDTO;
+use Spatie\Permission\Models\Role as SpatieRole;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
+// use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Exceptions\RoleAlreadyExists;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use App\Models\Role;
+use App\Models\User;
+use Symfony\Component\HttpFoundation\Response;
 
 class RoleController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:view role', ['only' => ['index']]);
-        $this->middleware('permission:create role', ['only' => ['create','store','addPermissionToRole','givePermissionToRole']]);
-        $this->middleware('permission:update role', ['only' => ['update','edit']]);
-        $this->middleware('permission:delete role', ['only' => ['destroy']]);
-    }
 
     public function index()
     {
-        $roles = Role::get();
-        return view('role-permission.role.index', ['roles' => $roles]);
+        $roles = Role::all();
+        if (Auth::user()->hasRole('admin')) {
+            $roles = $roles->where('name', '!=', 'super-admin');
+        }
+        return response()->json($roles);
     }
 
-    public function create()
+
+    public function store(RoleDTO $roleDTO)
     {
-        return view('role-permission.role.create');
+
+        // $id = (string) Str::ulid();
+        // Log::info('Generated ID: ' . $id);
+        Log::info('Role DTO:', (array) $roleDTO);
+
+        // try {
+
+        $role = Role::create([
+            // 'id' => $id,
+            'name' => $roleDTO->name,
+            'guard_name' => 'web'
+        ]);
+
+        Log::info('Creating Role with data:', [
+            'id' => $role->id,
+            'name' => $roleDTO->name,
+            'guard_name' => 'web',
+
+        ]);
+
+        if (!empty($roleDTO->permissions)) {
+            $permissions = Permission::whereIn('name', $roleDTO->permissions)->get();
+
+            $existingPermissions = $permissions->pluck('name')->toArray();
+            $missingPermissions = array_diff($roleDTO->permissions, $existingPermissions);
+
+
+            if (!empty($missingPermissions)) {
+                return response()->json([
+                    'message' => 'Role created successfully, Some permissions do not exist: ' . implode(', ', $missingPermissions),
+                    'role_id' => $role->id,
+                ], Response::HTTP_BAD_REQUEST);
+            }
+
+            $role->syncPermissions($permissions);
+        }
+
+
+        return response()->json([
+            'message' => 'Role created successfully',
+            'role' => $role->load('permissions'),
+            'role_id' => $role->id
+        ], Response::HTTP_CREATED);
+        // } catch (RoleAlreadyExists $e) {
+
+        //     return response()->json([
+        //         'message' => "A role '{$roleDTO->name}' already exists"
+        //     ], Response::HTTP_CONFLICT);
+        // }
     }
 
-    public function store(Request $request)
+
+    public function update(RoleDTO $roleDTO, $roleId)
     {
-        $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'unique:roles,name'
-            ]
+        $role = Role::findOrFail($roleId);
+        Log::info('Updating Role', [
+            'role_id' => $role->id,
+            'name' => $roleDTO->name,
+            // 'permissions' => $roleDTO->permissions
         ]);
-
-        Role::create([
-            'name' => $request->name
-        ]);
-
-        return redirect('roles')->with('status','Role Created Successfully');
-    }
-
-    public function edit(Role $role)
-    {
-        return view('role-permission.role.edit',[
-            'role' => $role
-        ]);
-    }
-
-    public function update(Request $request, Role $role)
-    {
-        $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'unique:roles,name,'.$role->id
-            ]
-        ]);
-
         $role->update([
-            'name' => $request->name
+            'name' => $roleDTO->name
         ]);
-
-        return redirect('roles')->with('status','Role Updated Successfully');
+        Log::info('Role after update name', $role->toArray());
+        // if (!empty($roleDTO->permissions)) {
+        //     $role->syncPermissions($roleDTO->permissions);
+        //     Log::info('Permissions synced', $roleDTO->permissions);
+        // }
+        $role->load('permissions');
+        Log::info('Role after updating and loading permissions', $role->toArray());
+        return response()->json(['message' => 'Role Updated Successfully', 'data' => $role], 200);
     }
 
     public function destroy($roleId)
     {
         $role = Role::find($roleId);
         $role->delete();
-        return redirect('roles')->with('status','Role Deleted Successfully');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Role deleted successfully',
+        ], 200);
     }
 
-    public function addPermissionToRole($roleId)
-    {
-        $permissions = Permission::get();
-        $role = Role::findOrFail($roleId);
-        $rolePermissions = DB::table('role_has_permissions')
-                                ->where('role_has_permissions.role_id', $role->id)
-                                ->pluck('role_has_permissions.permission_id','role_has_permissions.permission_id')
-                                ->all();
 
-        return view('role-permission.role.add-permissions', [
-            'role' => $role,
-            'permissions' => $permissions,
-            'rolePermissions' => $rolePermissions
-        ]);
-    }
+    // public function assignRole(RoleDTO $roleDTO, $id)
+    // {
+    //     $user = User::findOrFail($roleDTO->userId);
+    //     $user->assignRole($roleDTO->name);
 
-    public function givePermissionToRole(Request $request, $roleId)
-    {
-        $request->validate([
-            'permission' => 'required'
-        ]);
+    //     return response()->json(['message' => 'Role assigned successfully']);
+    // }
 
-        $role = Role::findOrFail($roleId);
-        $role->syncPermissions($request->permission);
 
-        return redirect()->back()->with('status','Permissions added to role');
-    }
+
+    // public function givePermissionToRole(RoleDTO $roleDTO, $roleId)
+    // {
+    //     $role = Role::findOrFail($roleId);
+    //     $role->syncPermissions($roleDTO->permissions);
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Permissions added to role',
+    //         'data' => $role
+    //     ], 200);
+    // }
 }

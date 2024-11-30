@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\Auth\LoginController;
+// use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 
@@ -17,9 +17,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     Route::apiResource('permissions', PermissionController::class);
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
 // Route::middleware('auth:sanctum')->get('/user/{id}', [UserController::class, 'show']);
 // Route::post('/login', [LoginController::class, 'login']);
 
@@ -34,25 +34,37 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/user/{id}', [UserController::class, 'show']);
     Route::put('/user/{id}', [UserController::class, 'update']);
-    
 });
 
-Route::middleware(['auth:sanctum', 'role:admin|superadmin'])->group(function () {
+Route::middleware(['auth:sanctum', 'role:admin|super-admin'])->group(function () {
 
     Route::post('/users/{id}/role', [UserController::class, 'updateUserRole']);
     Route::delete('/user/{id}', [UserController::class, 'destroy']);
 });
-Route::middleware(['auth:sanctum', 'role:superadmin'])->put('/user/{id}/permissions', [PermissionController::class, 'update']);
+Route::middleware(['auth:sanctum', 'role:super-admin'])->put('/user/{id}/permissions', [PermissionController::class, 'update']);
 
 //ts
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('categories', CategoryController::class);
+    Route::get('/categories/search/{name}', [CategoryController::class, 'searchCategory']);
 
     Route::apiResource('products', ProductController::class);
+    Route::post('/products/search', [ProductController::class, 'searchProduct']);
     // Route::get('products', [ProductController::class, 'index']);
     // Route::post('products', [ProductController::class, 'store']);
     // Route::get('products/{id}', [ProductController::class, 'show']);
     // Route::put('products/{id}', [ProductController::class, 'update']);
     // Route::delete('products/{id}', [ProductController::class, 'destroy']);
 
+});
+
+
+
+//role
+Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
+    Route::apiResource('roles', RoleController::class);
+    // Route::get('roles', [RoleController::class, 'index']);
+    // Route::post('roles', [RoleController::class, 'store']);
+    // Route::put('roles/{id}', [RoleController::class, 'update']);
+    // Route::delete('roles/{id}', [RoleController::class, 'destroy']);
 });

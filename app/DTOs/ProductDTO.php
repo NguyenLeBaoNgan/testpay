@@ -1,26 +1,30 @@
 <?php
+
 namespace App\DTOs;
 
+use Spatie\LaravelData\Attributes\Validation\Min;
+use Spatie\LaravelData\Attributes\Validation\Nullable;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Validation\Required;
+
 class ProductDTO extends Data
 {
     public function __construct(
-        #[Required]
-        public string $name,
+
+        public ?string $name,
 
         public ?string $description,
 
-        #[Required]
-        public float $price,
+        #[Nullable, Min(0)]
+        public ?float $price,
 
-        #[Required]
-        public int $stock,
+        #[Nullable, Min(0)]
+        public ?int $quantity,
 
-        #[Required]
-        public int $category_id,
 
-        #[Required]
-        public int $user_id
+        public ?string $category_id,
+
+
+        public ?string $user_id,
     ) {}
 }

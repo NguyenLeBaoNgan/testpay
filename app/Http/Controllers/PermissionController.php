@@ -2,89 +2,79 @@
 
 namespace App\Http\Controllers;
 
+use App\DTOs\PermissionDTO;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Permission;
+// use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use App\Models\Permission;
 
 class PermissionController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(function ($request, $next) {
 
-            header('X-Custom-Header: Some Value');
-            return $next($request);
-        });
-
-        // $this->middleware('auth');
-        // $this->middleware('permission:view permission', ['only' => ['index']]);
-        // $this->middleware('permission:create permission', ['only' => ['create','store']]);
-        // $this->middleware('permission:update permission', ['only' => ['update','edit']]);
-        // $this->middleware('permission:delete permission', ['only' => ['destroy']]);
-    }
 
     public function index()
     {
         $permissions = Permission::all();
-        // return view('role-permission.permission.index', ['permissions' => $permissions]);
-        // return response()->json($permissions);
-        Log::info('Request received', ['user_id' => auth()->id()]);
 
+        Log::info('Request received', ['user_id' => auth()->id()]);
+        // dd($permissions);
         return response()->json([
             'success' => true,
             'data' => $permissions
         ], 200);
-        // $permissions = Permission::all();
-        // return response()->json(['permissions' => $permissions], 200);
-        // return response()->json(['permissions' => ['view', 'edit', 'delete']]);
 
-        // $permissions = Permission::get();
-        // return view('role-permission.permission.index', ['permissions' => $permissions]);
     }
 
-    // public function create()
-    // {
-    //     return view('role-permission.permission.create');
-    // }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'unique:permissions,name'
-            ]
-        ]);
+    public function store(PermissionDTO $permissionDTO)
+{
 
-        $permission = Permission::create([
-            'name' => $request->name,
-            'guard_name' => 'web',
-        ]);
-        Log::info('Created permission: ', ['permission' => $permission]);
-        return response()->json($permission, 201);
+    $permission = new Permission([
+        'name' => $permissionDTO->name,
+        'guard_name' => 'web',
+    ]);
+
+    if (empty($permission->id)) {
+        $permission->id = (string) Str::ulid();
     }
 
-    // public function edit(Permission $permission)
-    // {
-    //     return view('role-permission.permission.edit', ['permission' => $permission]);
-    // }
+    Log::info('Generated ULID before saving:', ['id' => $permission->id]);
+    $permission->save();
 
-    public function update(Request $request, $id)
+    // $permission->refresh();
+
+    Log::info('Created permission: ', [
+        'id' => $permission->id,
+        'name' => $permission->name,
+        'guard_name' => $permission->guard_name,
+        'created_at' => $permission->created_at,
+    ]);
+
+    return response()->json($permission, 201);
+}
+
+    public function update(PermissionDTO $permissionDTO, Permission $permission)
     {
-        $permission = Permission::findOrFail($id);
+        // $permission = Permission::findOrFail($id);
 
-        $request->validate([
-            'name' => 'required|string|unique:permissions,name,' . $permission->id . '|max:255',
+        $permissionDTO->validate([
+            'name' => $permissionDTO->name . '|max:255',
         ]);
-
-        $permission->name = $request->name;
+        if (Permission::where('name', $permissionDTO->name)->where('id', '!=', $permission->id)->exists()) {
+            return response()->json(['error' => 'Permission name already exists'], 400);
+        }
+        if ($permission->name === $permissionDTO->name) {
+            return response()->json($permission); 
+        }
+        $permission->name = $permissionDTO->name;
         $permission->save();
 
         Log::info('Updated permission: ', ['permission' => $permission]);
 
         return response()->json($permission);
     }
+
 
     public function destroy($id)
     {
@@ -101,4 +91,10 @@ class PermissionController extends Controller
         }
     }
 
+
+    public function show($id)
+    {
+        $permission = Permission::findOrFail($id);
+        return response()->json($permission);
+    }
 }

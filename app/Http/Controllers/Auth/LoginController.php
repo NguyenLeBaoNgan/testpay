@@ -9,32 +9,32 @@ use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
-    public function login(Request $request)
-    {
+    // public function login(Request $request)
+    // {
 
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-
-        if (Auth::attempt($request->only('email', 'password'))) {
-
-            $user = Auth::user();
-
-            $token = $user->createToken('YourAppName')->plainTextToken;
-            session(['api_token' => $token]);
+    //     $request->validate([
+    //         'email' => 'required|email',
+    //         'password' => 'required',
+    //     ]);
 
 
-            return response()->json([
-                'success' => true,
-                'token' => $token,
-            ], 200);
-        }
+    //     if (Auth::attempt($request->only('email', 'password'))) {
+
+    //         $user = Auth::user();
+
+    //         $token = $user->createToken('YourAppName')->plainTextToken;
+    //         session(['api_token' => $token]);
 
 
-        throw ValidationException::withMessages([
-            'email' => ['Thông tin đăng nhập không chính xác.'],
-        ]);
-    }
+    //         return response()->json([
+    //             'success' => true,
+    //             'token' => $token,
+    //         ], 200);
+    //     }
+
+
+    //     throw ValidationException::withMessages([
+    //         'email' => ['Thông tin đăng nhập không chính xác.'],
+    //     ]);
+    // }
 }
