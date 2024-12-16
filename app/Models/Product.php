@@ -10,11 +10,12 @@ class Product extends Model
     use HasFactory;
     use HasUlids;
     protected $primaryKey = 'id';
-    protected $fillable = ['name', 'description', 'price', 'quantity', 'category_id', 'user_id'];
+    protected $fillable = ['name', 'description', 'price', 'quantity', 'category_id', 'user_id' ,'image'];
 
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        // return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Category::class, 'category_product', 'product_id', 'category_id');
     }
 
     // public function user()

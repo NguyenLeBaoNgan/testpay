@@ -8,6 +8,7 @@ use App\Http\Controllers\UserController;
 // use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\OrderController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
@@ -27,13 +28,14 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 
+Route::get('/', [ProductController::class, 'index']);
 Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logout']);
 
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/user/{id}', [UserController::class, 'show']);
-    Route::put('/user/{id}', [UserController::class, 'update']);
+    Route::put('/users', [UserController::class, 'update']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin|super-admin'])->group(function () {
@@ -67,4 +69,12 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     // Route::post('roles', [RoleController::class, 'store']);
     // Route::put('roles/{id}', [RoleController::class, 'update']);
     // Route::delete('roles/{id}', [RoleController::class, 'destroy']);
+});
+
+Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
+    //     Route::post('orders', [OrderController::class, 'store']);
+    // Route::put('orders/{orderId}', [OrderController::class, 'update']);
+    // Route::get('orders/{orderId}', [OrderController::class, 'show']);
+    // Route::delete('orders/{orderId}', [OrderController::class, 'destroy']);
+    Route::apiResource('orders', OrderController::class);
 });

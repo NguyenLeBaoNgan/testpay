@@ -16,8 +16,12 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::get();
-        return response()->json($users);
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        return response()->json($user);
     }
 
     public function store(UserDTO $userDTO)
@@ -33,12 +37,22 @@ class UserController extends Controller
         return response()->json($user, 201);
     }
 
-
-    public function update(UserDTO $userDTO,  $id)
+    public function updateUserRole(UserDTO $userDTO, $id)
     {
         $user = User::findOrFail($id);
-        Log::info('Updating user: ', ['id' => $id, 'request_data' => $userDTO->all()]);
+        if (!$user) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
 
+        $user->syncRoles($userDTO->roles);
+        return response()->json($user);
+    }
+    public function update(UserDTO $userDTO)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
 
         if (!empty($userDTO->name)) {
             $user->name = $userDTO->name;
@@ -51,9 +65,9 @@ class UserController extends Controller
             $user->password = Hash::make($userDTO->password);
         }
 
-        if (!empty($userDTO->roles)) {
-            $user->syncRoles($userDTO->roles);
-        }
+        // if (!empty($userDTO->roles)) {
+        //     $user->syncRoles($userDTO->roles);
+        // }
 
         $user->save();
         Log::info('User updated successfully: ', $user->toArray());
@@ -110,7 +124,7 @@ class UserController extends Controller
         ]);
         Log::info('User ID: ' . $user->id);
 
-        $user->assignRole('admin');
+        $user->assignRole('user');
 
         $permissions = $user->getAllPermissions();
         $permissionNames = $permissions->pluck('name')->toArray();
