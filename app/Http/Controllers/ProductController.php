@@ -95,91 +95,68 @@ class ProductController extends Controller
         return response()->json($product);
     }
     // public function update(ProductDTO $productDTO, $id)
-    // {
-    //     // Lấy danh sách category_id từ request (nếu có)
-    //     $categoryIds = request()->input('category_id', []);
-    //     if (!is_array($categoryIds)) {
-    //         $categoryIds = [$categoryIds];
-    //     }
-
-    //     // Kiểm tra nếu người dùng đã đăng nhập
-    //     $userId = Auth::id();
-    //     if (!$userId) {
-    //         return response()->json(['error' => 'Unauthorized'], 401);
-    //     }
-
-    //     // Tìm sản phẩm theo id
-    //     $product = Product::findOrFail($id);
-    //     if (!$product) {
-    //         return response()->json(['error' => 'Product not found'], 404);
-    //     }
-
-    //     // Kiểm tra xem tên sản phẩm có trùng với sản phẩm khác không
-    //     $testProduct = Product::where('name', $productDTO->name)
-    //         ->where('id', '!=', $id)  // Tránh trùng với sản phẩm hiện tại
-    //         ->first();
-    //     if ($testProduct) {
-    //         return response()->json(['error' => 'Product name already exists'], 409);
-    //     }
-
-    //     // Khởi tạo mảng dữ liệu cần cập nhật
-    //     $productData = [];
-
-    //     // Cập nhật các trường nếu có giá trị hợp lệ
-    //     if (!empty($productDTO->name)) {
-    //         $productData['name'] = $productDTO->name;
-    //     }
-    //     if (!empty($productDTO->description)) {
-    //         $productData['description'] = $productDTO->description;
-    //     }
-    //     if (isset($productDTO->price) && $productDTO->price !== '') {
-    //         $productData['price'] = $productDTO->price;
-    //     }
-    //     if (isset($productDTO->quantity)) {
-    //         $productData['quantity'] = $productDTO->quantity;
-    //     }
-
-    //     // Cập nhật hình ảnh nếu có (xử lý thay thế hình ảnh cũ)
-    //     if ($productDTO->image) {
-    //         // Xóa hình ảnh cũ nếu có
-    //         if ($product->image) {
-    //             Storage::delete('public/products/' . basename($product->image));
-    //         }
-
-    //         // Lưu hình ảnh mới
-    //         $imageName = time() . '.' . $productDTO->image->extension();
-    //         $productDTO->image->storeAs('public/products', $imageName);
-    //         $productData['image'] = asset('storage/products/' . $imageName);
-    //     }
-
-    //     // Cập nhật sản phẩm với dữ liệu đã chọn
-    //     $product->update($productData);
-
-    //     // Cập nhật mối quan hệ với danh mục (nếu có)
-    //     if (!empty($categoryIds)) {
-    //         // Xóa các mối quan hệ cũ trước khi thêm mới
-    //         DB::table('category_product')->where('product_id', $product->id)->delete();
-
-    //         // Thêm các mối quan hệ mới
-    //         foreach ($categoryIds as $categoryId) {
-    //             DB::table('category_product')->insert([
-    //                 'id' => (string) Str::ulid(),
-    //                 'category_id' => $categoryId,
-    //                 'product_id' => $product->id,
-    //                 'created_at' => now(),
-    //                 'updated_at' => now(),
-    //             ]);
-    //         }
-    //     }
-
-    //     // Tải lại mối quan hệ category
-    //     $product->load('category');
-
-    //     // Trả về sản phẩm đã cập nhật
-    //     return response()->json($product);
-    // }
 
 
+    public function update(ProductDTO $productDTO, $id)
+    {
+        $categoryIds = request()->input('category_id', []);
+        if (!is_array($categoryIds)) {
+            $categoryIds = [$categoryIds];
+        }
+
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $product = Product::findOrFail($id);
+        if (!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+        $testProduct = Product::where('name', $productDTO->name)
+            ->where('id', '!=', $id)
+            ->first();
+        if ($testProduct) {
+            return response()->json(['error' => 'Product name already exists'], 409);
+        }
+
+        $productData = [
+            'name' => $productDTO->name ?? $product->name,
+            'description' => $productDTO->description ?? $product->description,
+            'price' => $productDTO->price ?? $product->price,
+            'quantity' => $productDTO->quantity ?? $product->quantity,
+        ];
+
+        if ($productDTO->image && $productDTO->image->isValid()) {
+            if ($product->image) {
+                Storage::delete('public/products/' . basename($product->image));
+            }
+            $imageName = time() . '.' . $productDTO->image->extension();
+            $productDTO->image->storeAs('public/products', $imageName);
+            $productData['image'] = asset('storage/products/' . $imageName);
+        }
+        Log::info('Product Data: ', $productData);
+
+        $product->update($productData);
+
+        if (!empty($categoryIds)) {
+            DB::table('category_product')->where('product_id', $product->id)->delete();
+            foreach ($categoryIds as $categoryId) {
+                DB::table('category_product')->insert([
+                    'id' => (string) Str::ulid(),
+                    'category_id' => $categoryId,
+                    'product_id' => $product->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
+        $product->load('category');
+
+        return response()->json($product);
+    }
 
 
     public function destroy($id)

@@ -39,9 +39,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 Route::middleware(['auth:sanctum', 'role:admin|super-admin'])->group(function () {
-
+    Route::get('/getalluser', [UserController::class, 'getalluser']);
     Route::post('/users/{id}/role', [UserController::class, 'updateUserRole']);
     Route::delete('/user/{id}', [UserController::class, 'destroy']);
+    Route::post('/updateuser/{id}', [UserController::class, 'updateuser']);
 });
 Route::middleware(['auth:sanctum', 'role:super-admin'])->put('/user/{id}/permissions', [PermissionController::class, 'update']);
 
@@ -55,18 +56,19 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Route::get('products', [ProductController::class, 'index']);
     // Route::post('products', [ProductController::class, 'store']);
     // Route::get('products/{id}', [ProductController::class, 'show']);
-    // Route::put('products/{id}', [ProductController::class, 'update']);
+    Route::post('products/{id}', [ProductController::class, 'update']);
     // Route::delete('products/{id}', [ProductController::class, 'destroy']);
 
+
 });
+Route::apiResource('products', ProductController::class);
 
-
-
+Route::post('/check-stock', [OrderController::class, 'checkStock']);
 //role
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     Route::apiResource('roles', RoleController::class);
     // Route::get('roles', [RoleController::class, 'index']);
-    // Route::post('roles', [RoleController::class, 'store']);
+    Route::post('roles/{id}', [RoleController::class, 'givePermissionToRole']);
     // Route::put('roles/{id}', [RoleController::class, 'update']);
     // Route::delete('roles/{id}', [RoleController::class, 'destroy']);
 });

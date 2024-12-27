@@ -23,6 +23,10 @@ class UserController extends Controller
 
         return response()->json($user);
     }
+    public function getalluser()
+    {
+        return User::all();
+    }
 
     public function store(UserDTO $userDTO)
     {
@@ -73,7 +77,33 @@ class UserController extends Controller
         Log::info('User updated successfully: ', $user->toArray());
         return response()->json($user);
     }
+    public function updateuser(UserDTO $userDTO, $id)
+    {
+        // $user = Auth::user();
+        $user = User::find($id);
 
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (!empty($userDTO->name)) {
+            $user->name = $userDTO->name;
+        }
+        if (!empty($userDTO->email)) {
+            $user->email = $userDTO->email;
+        }
+
+        if (!empty($userDTO->password)) {
+            $user->password = Hash::make($userDTO->password);
+        }
+
+        if (!empty($userDTO->roles)) {
+            $user->syncRoles($userDTO->roles);
+        }
+        $user->save();
+
+        return response()->json($user);
+    }
     public function destroy($id)
     {
         $user = User::findOrFail($id);
@@ -83,7 +113,10 @@ class UserController extends Controller
             'name' => $user->name,
             'email' => $user->email,
         ]);
-
+        if (Auth::id() == $id) {
+            Log::warning('User attempted to delete themselves.', ['id' => $id]);
+            return response()->json(['message' => 'You cannot delete yourself.'], 403);
+        }
         if (Auth::user()->hasAnyRole(['admin', 'super-admin'])) {
             $user->delete();
             Log::info('User deleted successfully: ', ['id' => $id]);
@@ -128,7 +161,7 @@ class UserController extends Controller
 
         $permissions = $user->getAllPermissions();
         $permissionNames = $permissions->pluck('name')->toArray();
-        return response()->json(new UserDTO($user->name, $user->email, $user->password, roles: ['admin'], permissions: [$permissionNames]), 201);
+        return response()->json(new UserDTO($user->name, $user->email, $user->password, roles: ['user'], permissions: [$permissionNames]), 201);
     }
 
 
@@ -141,8 +174,10 @@ class UserController extends Controller
 
         $user = User::where('email', $userDTO->email)->firstOrFail();
         $token = $user->createToken('auth_token')->plainTextToken;
+        $roles = $user->roles->pluck('name')->toArray();
         return response()->json([
             'token' => $token,
+            'role' => $roles,
             'message' => 'Logged in successfully',
         ], 200);
     }
@@ -165,5 +200,4 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Unauthorized'], 401);
     }
-
 }

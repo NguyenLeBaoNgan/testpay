@@ -123,17 +123,30 @@ class RoleController extends Controller
     //     return response()->json(['message' => 'Role assigned successfully']);
     // }
 
+    public function show($roleId)
+    {
+        $role = Role::with('permissions')->findOrFail($roleId);
+        return response()->json($role);
+    }
 
 
-    // public function givePermissionToRole(RoleDTO $roleDTO, $roleId)
-    // {
-    //     $role = Role::findOrFail($roleId);
-    //     $role->syncPermissions($roleDTO->permissions);
+    public function givePermissionToRole(RoleDTO $roleDTO, $roleId)
+    {
+        $role = Role::findOrFail($roleId);
+        if ($role->name !== $roleDTO->name) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The provided name does not match the role.',
+            ], 400);
+        }
+        foreach ($roleDTO->permissions as $permission) {
+            $role->givePermissionTo($permission);
+        }
 
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'Permissions added to role',
-    //         'data' => $role
-    //     ], 200);
-    // }
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Permissions added to role',
+            'data' => $role->load('permissions')
+        ], 200);
+    }
 }

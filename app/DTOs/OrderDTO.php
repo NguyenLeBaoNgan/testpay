@@ -1,22 +1,18 @@
 <?php
+
 namespace App\DTOs;
 
 use Spatie\LaravelData\Data;
-use Spatie\LaravelData\Attributes\Validation\Required;
-use Spatie\LaravelData\Attributes\Validation\Unique;
 
 class OrderDTO extends Data
 {
     public function __construct(
-
-        public ?string $userId,
-
-        public ?float $totalAmount,
-
+        // public ?string $userId,
+        public ?string $user_id,
+        // public ?float $totalAmount,
+        public ?string $totalAmount,
         public ?string $status,
-
         public array $items
-
     ) {}
     // public static function fromArray(array $data, string $userId): self
     // {

@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\DTOs\OrderDTO;
 use App\Models\OrderItem;
 use App\DTOs\OrderItemDTO;
+use App\DTOs\ProductDTO;
 use App\Models\Product;
 use Illuminate\Support\Str;
 
@@ -36,7 +37,7 @@ class OrderController extends Controller
                 }
             }
 
-        
+
             $product->quantity -= $item['quantity'];
             $product->save();
 
@@ -147,5 +148,27 @@ class OrderController extends Controller
         }
         $order->delete();
         return response()->json(['message' => 'Order deleted successfully']);
+    }
+
+    public function checkStock(OrderDTO $orderDTO)
+    {
+        $error = [];
+        foreach ($orderDTO->items as $item) {
+            $product = Product::find($item['product_id']);
+            if (!$product) {
+                $error[] = 'Product not found';
+            }
+            if ($product->quantity < $item['quantity']) {
+                $error[] = [
+                    'error' => 'Insufficient stock for product name ' . $product->name,
+                    'available_quantity' => $product->quantity,
+                    'required_quantity' => $item['quantity'],
+                ];
+            }
+        }
+        if (count($error) > 0) {
+            return response()->json($error, 400);
+        }
+        return response()->json(['message' => 'Stock available'], 200);
     }
 }

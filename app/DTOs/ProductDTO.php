@@ -18,7 +18,8 @@ class ProductDTO extends Data
         public ?string $description,
 
         #[Nullable, Min(0)]
-        public ?float $price,
+        // public ?float $price,
+        public ?string $price,
 
         #[Nullable, Min(0)]
         public ?int $quantity,
@@ -32,9 +33,12 @@ class ProductDTO extends Data
 
         public ?UploadedFile  $image,
     ) {
-        
+
         $this->category_id = is_array($this->category_id)
             ? $this->category_id
             : [$this->category_id];
+    }
+    public function getStick():?int {
+        return $this->quantity;
     }
 }

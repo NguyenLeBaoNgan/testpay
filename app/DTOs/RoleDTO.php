@@ -7,8 +7,8 @@ use Spatie\LaravelData\Attributes\Validation\ArrayType;
 class RoleDTO extends Data
 {
     public function __construct(
-        #[Required]
-        public int $userId,
+        // #[Required]
+        // public int $userId,
 
         #[Required]
         public string $name,

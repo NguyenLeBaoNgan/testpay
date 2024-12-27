@@ -10,15 +10,22 @@ use Illuminate\Support\Facades\Log;
 
 class CategoryController extends Controller
 {
+    // public function index()
+    // {
+    //     $categories = Category::where('user_id', Auth::id())->get();
+    //     return response()->json($categories);
+    // }
+
     public function index()
     {
-        $categories = Category::where('user_id', Auth::id())->get();
-        return response()->json($categories);
+        Auth::id();
+
+        return Category::all();
     }
 
-
     public function store(CategoryDTO $categoryDTO)
-    {       $userId = Auth::id();
+    {
+        $userId = Auth::id();
         if (!$userId) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }

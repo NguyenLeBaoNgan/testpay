@@ -10,7 +10,7 @@ class OrderItemDTO extends Data
     public function __construct(
         public string $productId,
         public int $quantity,
-        public float $price
+        public string $price
 
     ) {}
 
@@ -21,5 +21,8 @@ class OrderItemDTO extends Data
             quantity: $data['quantity'],
             price: $data['price']
         );
+    }
+    public function getCartQuantity():int {
+        return $this->quantity;
     }
 }
