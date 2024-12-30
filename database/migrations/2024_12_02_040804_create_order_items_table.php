@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,7 +15,7 @@ return new class extends Migration
             $table->foreignUlid('order_id')->constrained('orders')->onDelete('cascade');
             $table->foreignUlid('product_id')->constrained('products')->onDelete('cascade');
             $table->integer('quantity')->unsigned();
-            $table->decimal('price', 15, 2); 
+            $table->decimal('price', 15, 2);
             $table->decimal('total', 15, 2)->storedAs('quantity * price');
             $table->timestamps();
         });

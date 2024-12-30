@@ -13,8 +13,9 @@ use Spatie\Permission\Models\Permission;
 
 class User extends Authenticatable
 {
-
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
     use HasRoles;
     use HasUlids;
     /**

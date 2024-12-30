@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Permission;
-use App\Models\Role; 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Database\Seeder;

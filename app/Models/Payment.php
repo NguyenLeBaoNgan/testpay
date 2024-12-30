@@ -11,6 +11,6 @@ class Payment extends Model
     use HasFactory;
     use HasUlids;
     protected $primaryKey = 'id';
-   // protected $fillable = ['order_id','price', 'method', 'user_id', 'status'];
+    // protected $fillable = ['order_id', 'full_name','email','phone','address', 'method',  'status'];
 
 }

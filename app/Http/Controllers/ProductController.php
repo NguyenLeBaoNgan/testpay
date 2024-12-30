@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Product;
 use App\DTOs\ProductDTO;
 use Illuminate\Support\Facades\Auth;
@@ -165,47 +164,49 @@ class ProductController extends Controller
         $product->delete();
         return response()->json(['message' => 'Product deleted successfully.']);
     }
-    public function searchProduct(ProductDTO $productDTO)
-    {
-        Log::info('Searching data: ', (array) $productDTO);
+    // public function searchProduct(ProductDTO $productDTO)
+    // {
+    //     Log::info('Searching data: ', (array) $productDTO);
 
-        $query = Product::query();
-
-
-        if ($productDTO->name) {
-            Log::info('Applying filter on name: ', [$productDTO->name]);
-            $query->where('name', 'like', "%{$productDTO->name}%");
-        }
+    //     $query = Product::query();
 
 
-        if ($productDTO->description) {
-            Log::info('Applying filter on description: ', [$productDTO->description]);
-            $query->where('description', 'like', "%{$productDTO->description}%");
-        }
+    //     if ($productDTO->name) {
+    //         Log::info('Applying filter on name: ', [$productDTO->name]);
+    //         $query->where('name', 'like', "%{$productDTO->name}%");
+    //     }
 
-        if ($productDTO->price) {
-            Log::info('Applying filter on price: ', [$productDTO->price]);
-            $query->where('price', 'like', "%{$productDTO->price}%");
-        }
 
-        if ($productDTO->category_id) {
-            Log::info('Applying filter on category_id: ', [$productDTO->category_id]);
-            $category = Category::where('name', 'like', "%{$productDTO->category_id}%")->first();
-            if ($category) {
-                $query->where('category_id', $category->id);
-            } else {
-                return response()->json(['message' => 'Category not found'], 404);
-            }
-        }
+    //     if ($productDTO->description) {
+    //         Log::info('Applying filter on description: ', [$productDTO->description]);
+    //         $query->where('description', 'like', "%{$productDTO->description}%");
+    //     }
 
-        $perPage = 1;
-        $products = $query->paginate($perPage);
-        // $products = $query->get();
+    //     if ($productDTO->price) {
+    //         Log::info('Applying filter on price: ', [$productDTO->price]);
+    //         $query->where('price', 'like', "%{$productDTO->price}%");
+    //     }
 
-        if ($products->isEmpty()) {
-            return response()->json(['message' => 'No products found'], 404);
-        }
+    //     if ($productDTO->category_id) {
+    //         Log::info('Applying filter on category_id: ', [$productDTO->category_id]);
+    //         $category = Category::where('id', $productDTO->category_id)->first();
+    //         if ($category) {
+    //             $query->whereHas('category', function ($q) use ($productDTO) {
+    //                 $q->where('category_id', $productDTO->category_id);
+    //             });
+    //         } else {
+    //             return response()->json(['message' => 'Category not found'], 404);
+    //         }
+    //     }
+    //     Log::info('SQL Query: ' . $query->toSql());
+    //     $perPage = 1;
+    //     $products = $query->paginate($perPage);
+    //     // $products = $query->get();
 
-        return response()->json($products);
-    }
+    //     if ($products->isEmpty()) {
+    //         return response()->json(['message' => 'No products found'], 404);
+    //     }
+
+    //     return response()->json($products);
+    // }
 }

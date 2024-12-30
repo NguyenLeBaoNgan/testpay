@@ -1,9 +1,11 @@
 <?php
 
 namespace App\DTOs;
+
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Validation\Required;
 use Spatie\LaravelData\Attributes\Validation\ArrayType;
+
 class RoleDTO extends Data
 {
     public function __construct(
@@ -12,8 +14,8 @@ class RoleDTO extends Data
 
         #[Required]
         public string $name,
-
         #[ArrayType]
         public array $permissions = []
-    ) {}
+    ) {
+    }
 }

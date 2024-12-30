@@ -3,13 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use App\DTOs\UserDTO;
-use App\DTOs\RoleDTO;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller

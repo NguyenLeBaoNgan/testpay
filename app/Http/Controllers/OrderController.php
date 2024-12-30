@@ -2,14 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\DTOs\OrderDTO;
 use App\Models\OrderItem;
-use App\DTOs\OrderItemDTO;
-use App\DTOs\ProductDTO;
 use App\Models\Product;
 use Illuminate\Support\Str;
 
@@ -171,4 +167,23 @@ class OrderController extends Controller
         }
         return response()->json(['message' => 'Stock available'], 200);
     }
+
+
+    // public function syncCart(OrderDTO $orderDTO)
+    // {
+    //     $cart = [];
+    //     foreach ($orderDTO->items as $item) {
+    //         $product = Product::find($item['product_id']);
+    //         if (!$product) {
+    //             return response()->json(['error' => 'Product not found'], 404);
+    //         }
+    //         $cart[] = [
+    //             'product_id' => $product->id,
+    //             'quantity' => $item['quantity'],
+    //             'price' => $product->price,
+    //             'total' => $item['quantity'] * $product->price,
+    //         ];
+    //     }
+    //     return response()->json($cart);
+    // }
 }

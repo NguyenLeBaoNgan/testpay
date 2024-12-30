@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Category;
 use App\DTOs\CategoryDTO;
 use Illuminate\Support\Facades\Auth;

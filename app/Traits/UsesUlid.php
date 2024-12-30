@@ -6,10 +6,9 @@ use Illuminate\Support\Str;
 
 trait UsesUlid
 {
-
     public $incrementing = false;
 
-   
+
     protected $keyType = 'string';
 
     protected static function bootUsesUlid()

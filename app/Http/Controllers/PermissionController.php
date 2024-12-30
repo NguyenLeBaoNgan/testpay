@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\DTOs\PermissionDTO;
-use Illuminate\Http\Request;
 // use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -11,8 +10,6 @@ use App\Models\Permission;
 
 class PermissionController extends Controller
 {
-
-
     public function index()
     {
         $permissions = Permission::all();
@@ -28,31 +25,31 @@ class PermissionController extends Controller
 
 
     public function store(PermissionDTO $permissionDTO)
-{
+    {
 
-    $permission = new Permission([
-        'name' => $permissionDTO->name,
-        'guard_name' => 'web',
-    ]);
+        $permission = new Permission([
+            'name' => $permissionDTO->name,
+            'guard_name' => 'web',
+        ]);
 
-    if (empty($permission->id)) {
-        $permission->id = (string) Str::ulid();
+        if (empty($permission->id)) {
+            $permission->id = (string) Str::ulid();
+        }
+
+        Log::info('Generated ULID before saving:', ['id' => $permission->id]);
+        $permission->save();
+
+        // $permission->refresh();
+
+        Log::info('Created permission: ', [
+            'id' => $permission->id,
+            'name' => $permission->name,
+            'guard_name' => $permission->guard_name,
+            'created_at' => $permission->created_at,
+        ]);
+
+        return response()->json($permission, 201);
     }
-
-    Log::info('Generated ULID before saving:', ['id' => $permission->id]);
-    $permission->save();
-
-    // $permission->refresh();
-
-    Log::info('Created permission: ', [
-        'id' => $permission->id,
-        'name' => $permission->name,
-        'guard_name' => $permission->guard_name,
-        'created_at' => $permission->created_at,
-    ]);
-
-    return response()->json($permission, 201);
-}
 
     public function update(PermissionDTO $permissionDTO, Permission $permission)
     {
@@ -65,7 +62,7 @@ class PermissionController extends Controller
             return response()->json(['error' => 'Permission name already exists'], 400);
         }
         if ($permission->name === $permissionDTO->name) {
-            return response()->json($permission); 
+            return response()->json($permission);
         }
         $permission->name = $permissionDTO->name;
         $permission->save();

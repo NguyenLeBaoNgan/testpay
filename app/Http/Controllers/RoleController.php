@@ -3,11 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\DTOs\RoleDTO;
-use Spatie\Permission\Models\Role as SpatieRole;
-use Illuminate\Http\Request;
 // use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Exceptions\RoleAlreadyExists;
 use Illuminate\Support\Str;
@@ -18,7 +15,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleController extends Controller
 {
-
     public function index()
     {
         $roles = Role::all();

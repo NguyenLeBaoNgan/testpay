@@ -2,7 +2,6 @@
 
 namespace App\DTOs;
 
-use App\Models\User;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\Attributes\Validation\Required;
 use Spatie\LaravelData\Attributes\Validation\ArrayType;
@@ -14,19 +13,16 @@ class UserDTO extends Data
         #[Nullable]
         #[Required]
         public ?string $name = null,
-
         #[Nullable]
         #[Required]
         public ?string $email = null,
-
         #[Nullable]
         #[Required]
         public ?string $password = null,
-
         #[ArrayType]
         public array $roles = [],
-
         #[ArrayType]
         public array $permissions = []
-    ) {}
+    ) {
+    }
 }
