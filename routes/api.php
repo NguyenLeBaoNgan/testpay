@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
@@ -61,6 +62,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 
 });
+Route::post('/payments', [PaymentController::class, 'store']);
 Route::apiResource('products', ProductController::class);
 Route::apiResource('categories', CategoryController::class);
 Route::post('/check-stock', [OrderController::class, 'checkStock']);

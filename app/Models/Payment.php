@@ -11,6 +11,14 @@ class Payment extends Model
     use HasFactory;
     use HasUlids;
     protected $primaryKey = 'id';
-    // protected $fillable = ['order_id', 'full_name','email','phone','address', 'method',  'status'];
+    protected $fillable = ['order_id', 'method',  'payments_status', 'payment_amount', 'transaction_id'];
 
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+    public function paymentDetails()
+    {
+        return $this->hasOne(PaymentDetails::class);
+    }
 }
