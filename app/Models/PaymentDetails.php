@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 
 class PaymentDetails extends Model
 {
+    protected $table = 'payments_details';
     use HasUlids;
     use HasFactory;
     protected $primaryKey = 'id';

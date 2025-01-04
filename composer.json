@@ -15,6 +15,7 @@
         "ramsey/uuid-doctrine": "^2.1",
         "spatie/laravel-data": "^4.10",
         "spatie/laravel-permission": "^6.9",
+        "stripe/stripe-php": "^16.4",
         "tymon/jwt-auth": "^2.1"
     },
     "require-dev": {
