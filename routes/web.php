@@ -21,9 +21,9 @@ use App\Http\Controllers\PermissionController;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
-    Route::get('/permissions', [PermissionController::class, 'index']);
-});
+// Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
+//     Route::get('/permissions', [PermissionController::class, 'index']);
+// });
 
 
 Route::get('/dashboard', function () {
@@ -43,11 +43,11 @@ Route::get('/test-auth', function () {
 //
 Auth::routes();
 
-Route::group(['middleware' => ['auth']], function () {
-    Route::resource('roles', RoleController::class);
-    Route::resource('users', UserController::class);
-    Route::resource('permissions', PermissionController::class);
-});
+// Route::group(['middleware' => ['auth']], function () {
+//     Route::resource('roles', RoleController::class);
+//     Route::resource('users', UserController::class);
+//     Route::resource('permissions', PermissionController::class);
+// });
 Route::get('/sanctum/csrf-cookie', function () {
     return response()->json(['status' => 'CSRF cookie set']);
 });

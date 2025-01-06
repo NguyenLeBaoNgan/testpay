@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2de5e21c179756a98a281e7f04619fe0",
+    "content-hash": "d71971fd3fb8cfbbbf3a67fe37c8a72e",
     "packages": [
         {
             "name": "amphp/amp",
@@ -5163,6 +5163,78 @@
                 "source": "https://github.com/revoltphp/event-loop/tree/v1.0.6"
             },
             "time": "2023-11-30T05:34:44+00:00"
+        },
+        {
+            "name": "sepayvn/laravel-sepay",
+            "version": "v1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sepayvn/laravel-sepay.git",
+                "reference": "3f7ab17f87088b0f7ff10e7b831d15d562392539"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sepayvn/laravel-sepay/zipball/3f7ab17f87088b0f7ff10e7b831d15d562392539",
+                "reference": "3f7ab17f87088b0f7ff10e7b831d15d562392539",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "^9.28 | ^10.0 | ^11.0",
+                "php": "^8.0",
+                "spatie/laravel-package-tools": "^1.16"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^7.8",
+                "nunomaduro/larastan": "^2.0.1",
+                "orchestra/testbench": "^8.8",
+                "pestphp/pest": "^2.20",
+                "pestphp/pest-plugin-arch": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^1.0",
+                "phpstan/phpstan-phpunit": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "SePay": "SePay\\SePay\\Facades\\SePay"
+                    },
+                    "providers": [
+                        "SePay\\SePay\\SePayServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SePay\\SePay\\": "src/",
+                    "SePay\\SePay\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "SePay",
+                    "email": "info@sepay.vn",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Laravel Package cho SePay - Giải pháp tự động hóa cho thanh toán chuyển khoản ngân hàng",
+            "homepage": "https://github.com/sepayvn/laravel-sepay",
+            "keywords": [
+                "SePay",
+                "laravel",
+                "laravel-sepay"
+            ],
+            "support": {
+                "issues": "https://github.com/sepayvn/laravel-sepay/issues",
+                "source": "https://github.com/sepayvn/laravel-sepay/tree/v1.2.0"
+            },
+            "time": "2024-05-22T08:36:04+00:00"
         },
         {
             "name": "spatie/laravel-data",

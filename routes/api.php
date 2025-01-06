@@ -10,6 +10,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\SePayWebhookController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
@@ -81,4 +82,12 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     // Route::get('orders/{orderId}', [OrderController::class, 'show']);
     // Route::delete('orders/{orderId}', [OrderController::class, 'destroy']);
     Route::apiResource('orders', OrderController::class);
+});
+Route::apiResource('orders', OrderController::class)->middleware('auth:sanctum');
+Route::group([
+    'prefix' => '/sepay',
+    'as' => 'sepay.',
+    // 'middleware' => ['api'],
+], function () {
+    Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
 });
