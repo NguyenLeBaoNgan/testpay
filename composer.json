@@ -13,6 +13,7 @@
         "league/flysystem": "^3.29",
         "ramsey/uuid": "^4.7",
         "ramsey/uuid-doctrine": "^2.1",
+        "saloonphp/saloon": "3.0",
         "sepayvn/laravel-sepay": "^1.2",
         "spatie/laravel-data": "^4.10",
         "spatie/laravel-permission": "^6.9",

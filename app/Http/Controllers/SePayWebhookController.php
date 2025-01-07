@@ -13,26 +13,27 @@ class SePayWebhookController extends Controller
     public function webhook(Request $request)
     {
 
-        $token = $request->header('Authorization');
+        // $token = $request->header('Authorization');
 
-        $expectedToken = 'Bearer c4e88037-a3d1-4b6d-ab63-a68fda287abb';
+        // $expectedToken = 'Bearer  ';
 
-        Log::info('Received Authorization Token:', ['token' => $token]);
-        Log::info('Expected Authorization Token:', ['expected_token' => $expectedToken]);
+        // Log::info('Received Authorization Token:', ['token' => $token]);
+        // Log::info('Expected Authorization Token:', ['expected_token' => $expectedToken]);
 
 
-        if ($token !== $expectedToken) {
-            Log::error('Unauthorized access to webhook', ['request' => $request->all()]);
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
+        // if ($token !== $expectedToken) {
+        //     Log::error('Unauthorized access to webhook', ['request' => $request->all()]);
+        //     return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        // }
 
         $data = $request->all();
-        Log::info('Received data:', ['data' => $data]);
+        Log::info($request->all());
+        // Log::info('Received data:', ['data' => $data]);
 
         if ($data['transferType'] === 'in' || $data['transferType'] === 'out') {
             $transactionDTO = TransactionDTO::fromArray($data);
 
-           
+
             Transaction::create([
                 'gateway' => $transactionDTO->gateway,
                 'transaction_date' => now(),
