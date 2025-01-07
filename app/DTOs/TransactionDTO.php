@@ -16,7 +16,7 @@ class TransactionDTO
     public $referenceNumber;
     public $body;
 
-    // Thêm phương thức tạo DTO từ mảng dữ liệu
+
     public static function fromArray(array $data): self
     {
         $dto = new self();
