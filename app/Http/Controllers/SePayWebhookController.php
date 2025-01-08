@@ -8,6 +8,9 @@ use App\Models\Transaction;
 
 use Illuminate\Support\Facades\Log;
 use App\Services\TransactionPipeline;
+use App\Pipes\ValidateTransaction;
+use App\Pipes\SaveTransactionToDatabase;
+use Illuminate\Pipeline\Pipeline;
 
 class SePayWebhookController extends Controller
 {
@@ -18,8 +21,7 @@ class SePayWebhookController extends Controller
 
             $transactionDTO = TransactionDTO::fromArray($request->all());
 
-            TransactionPipeline::process($transactionDTO);
-
+             TransactionPipeline::process($transactionDTO);
             return response()->json(['success' => true, 'message' => 'Transaction processed']);
         } catch (\Exception $e) {
             Log::error('Error processing transaction', ['error' => $e->getMessage()]);
