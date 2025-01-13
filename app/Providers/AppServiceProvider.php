@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use SePay\SePay\Pipelines\ProcessPaymentPipeline;
+use SePay\SePay\Pipes\CreateTransactionPipe;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +14,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // $this->app->singleton(ProcessPaymentPipeline::class, function ($app) {
+        //     return new ProcessPaymentPipeline([
+        //         new CreateTransactionPipe(),
+        //     ]);
+        // });
     }
 
     /**

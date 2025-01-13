@@ -9,64 +9,16 @@ use App\DTOs\OrderItemDTO;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Str;
-
+use Illuminate\Support\Carbon;
 class OrderController extends Controller
 {
     public function store(OrderDTO $orderDTO)
     {
-        // $totalAmount = 0;
-        // $userId = auth()->id();
-        // foreach ($orderDTO->items as $item) {
-        //     $product = Product::find($item['product_id']);
-
-        //     if (!$product) {
-        //         return response()->json(['error' => 'Product not found'], 404);
-        //     }
-
-        //     if ($product->quantity < $item['quantity']) {
-        //         if ($product->quantity == 0) {
-        //             return response()->json(['error' => 'Product name ' . $product->name . ' is out of stock'], 400);
-        //         } else {
-        //             return response()->json([
-        //                 'error' => 'Insufficient stock for product name ' . $product->name,
-        //                 'available_quantity' => $product->quantity
-        //             ], 400);
-        //         }
-        //     }
-
-
-        //     $product->quantity -= $item['quantity'];
-        //     $product->save();
-
-        //     Log::info("Product ID: " . $item['product_id'] . ", Price: " . $product->price);
-        //     Log::info("Quantity: " . $item['quantity']);
-
-        //     $itemTotal = $item['quantity'] * $product->price;
-        //     $totalAmount += $itemTotal;
-        // }
-        // Log::info("Total Amount: " . $totalAmount);
-        // $order = Order::create([
-        //     'user_id' => $userId,
-        //     'total_amount' => $totalAmount,
-        //     'status' => "pending",
-        // ]);
-        // Log::info("Order Created: " . json_encode($order));
-
-        // foreach ($orderDTO->items as $item) {
-        //     $product = Product::find($item['product_id']);
-
-        //     OrderItem::create([
-        //         'id' => (string) Str::ulid(),
-        //         'order_id' => $order->id,
-        //         'product_id' => $product->id,
-        //         'quantity' => $item['quantity'],
-        //         'price' => $product->price,
-        //         'total' => $item['quantity'] * $product->price,
-        //     ]);
-        // }
-        // return response()->json($order, 201);
-
-        $totalAmount = 0;
+        $checkStockResponse = $this->checkStock($orderDTO);
+        if ($checkStockResponse->getStatusCode() !== 200) {
+            return $checkStockResponse;
+        }
+       $totalAmount = 0;
         $userId = auth()->id();
 
         $order = Order::create([
@@ -80,7 +32,7 @@ class OrderController extends Controller
 
             $product = Product::find($item['product_id']);
             $priceitem = $product->price;
-            if($product){
+            if ($product) {
                 $itemTotal = $orderItem->quantity * $product->price;
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -88,16 +40,12 @@ class OrderController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $priceitem,
                 ]);
-                $totalAmount += $itemTotal ;
+                $totalAmount += $itemTotal;
             }
-
-
-
-
         }
         $order->update(['total_amount' => $totalAmount]);
 
-        $order->update(['status' => 'Paid']);
+        // $order->update(['status' => 'Paid']);
         return response()->json([
             'success' => true,
             'message' => 'Đơn hàng đã được tạo thành công',
@@ -106,6 +54,33 @@ class OrderController extends Controller
         ]);
     }
 
+    public function payOrder($orderId)
+    {
+        $order = Order::find($orderId);
+
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
+
+        if ($order->status !== 'unpaid') {
+            return response()->json(['error' => 'Order is not eligible for payment'], 400);
+        }
+
+
+        $paymentSuccessful = true;
+
+        if ($paymentSuccessful) {
+            $order->update(['status' => 'paid']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment successful. Order marked as paid.',
+                'order_id' => $order->id,
+            ]);
+        }
+
+        return response()->json(['error' => 'Payment failed'], 500);
+    }
 
 
     public function update(OrderDTO $orderDTO, $orderId)
@@ -194,7 +169,7 @@ class OrderController extends Controller
             if (!$product) {
                 $error[] = 'Product not found';
             }
-            if ($product->quantity < $item['quantity']) {
+            if ($product && $product->quantity < $item['quantity']) {
                 $error[] = [
                     'error' => 'Insufficient stock for product name ' . $product->name,
                     'available_quantity' => $product->quantity,
@@ -208,7 +183,37 @@ class OrderController extends Controller
         return response()->json(['message' => 'Stock available'], 200);
     }
 
+    public function handle()
+    {
+        $expiredOrders = Order::where('status', 'pending')
+            ->where('created_at', '<', now()->subHours(24)) // Xóa sau 24 giờ
+            ->delete();
 
+        $this->info("Đã xóa {$expiredOrders} đơn hàng pending quá hạn.");
+    }
+    public function deleteUnpaidOrders()
+    {
+
+        $thresholdTime = Carbon::now()->subHours(24);
+
+
+        $ordersToDelete = Order::where('status', 'unpaid')
+            ->where('created_at', '<', $thresholdTime)
+            ->get();
+
+        foreach ($ordersToDelete as $order) {
+
+            $order->items()->delete();
+
+
+            $order->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => count($ordersToDelete) . ' unpaid orders have been deleted.',
+        ]);
+    }
     // public function syncCart(OrderDTO $orderDTO)
     // {
     //     $cart = [];

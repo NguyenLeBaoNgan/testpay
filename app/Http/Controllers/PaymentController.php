@@ -14,88 +14,97 @@ use Symfony\Component\HttpFoundation\Response;
 use Stripe\StripeClient;
 use App\Models\Payment;
 use App\Models\PaymentDetails;
+use App\Services\PaymentService;
+use Illuminate\Http\Request;
+use App\Models\Product;
 use Exception;
 
 class PaymentController extends Controller
 {
     public function index()
     {
-        return Payment::all();
+        // return Payment::all();
+        return Payment::with('paymentDetails')->get();
     }
-
-    public function store(PaymentDTO $paymentDTO, PaymentDetailDTO $paymentDetailDTO)
+    protected $paymentService;
+    public function __construct(PaymentService $paymentService)
     {
-        $userId = Auth::id();
-        if (!$userId) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+        $this->paymentService = $paymentService;
+    }
 
-        $stripe = new StripeClient('sk_test_51QbecVCHpiBRB5pBrNnkZ78mhhQh4qzijkjUZ7cl4gKdrr19dZbfZyrPWIW6STjYtgRr7Uw3M7SlqVGWDfeEgsxc007BDUBsbg');
-
+    public function store(Request $request)
+    {
+        Log::info('Payment request received', [
+            'order_id' => $request->order_id,
+            'method' => $request->method,
+            'payment_status' => $request->payment_status,
+            'transaction_id' => $request->transaction_id,
+        ]);
         try {
-            $paymentIntent = $stripe->paymentIntents->create([
-                'amount' =>(int) $paymentDTO->payment_amount,
-                'currency' => 'usd',
-                'payment_method_types' => ['card'],
-            ]);
-
-            $transactionId = $paymentIntent->id;
-
-            $payment = new Payment([
-                'order_id' => $paymentDTO->order_id,
-                'payment_amount' => $paymentDTO->payment_amount,
-                'status' => 'pending',
-                'method' => $paymentDTO->method,
-                'transaction_id' => $transactionId,
-            ]);
-            $payment->save();
-
-            $paymentDetails = new PaymentDetails([
-               'payment_id' => $payment->id,
-                'address' => $paymentDetailDTO->address,
-                'phone' => $paymentDetailDTO->phone,
-                'email' => $paymentDetailDTO->email,
-                'note' => $paymentDetailDTO->note,
-            ]);
-            $paymentDetails->save();
-            Log::info('New Payment Created', [
-                'payment' => $payment,
-                'payment_details' => $paymentDetails,
-            ]);
-            if( $paymentIntent->status === 'succeeded'){
-                $payment->update([
-                    'status' => 'success',
-                ]);
-                $order = Order::find($paymentDTO->order_id);
-                $order->update([
-                    'status' => 'paid',
-                ]);
-                $order->save();
-            } else if($paymentIntent->status === 'failed'){
-                $payment->update([
-                    'status' => 'failed',
-                ]);
-                $order = Order::find($paymentDTO->order_id);
-                $order->update([
-                    'status' => 'cancelled',
-                ]);
-                $order->save();
-            }else
-            {
-                $payment->update([
-                    'status' => 'pending',
-                ]);
+            Log::info('Payment processed successfully', ['order_id' => $request->order_id]);
+            $order = Order::find($request->order_id);
+            if (!$order) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Order not found'
+                ], 404);
             }
-            $payment->save();
 
-            return response()->json($payment, 201);
 
-        } catch (Exception $e) {
-            Log::error(' Error', ['error' => $e->getMessage()]);
-            return response()->json(['error' => 'Payment creation failed'], 500);
+            $totalAmount = $order->total_amount;
+
+            $orderDTO = new OrderDTO(
+                $order->id,
+                $order->user_id,
+                $totalAmount,
+                []
+            );
+
+            $paymentData = $request->all();
+
+            $paymentDTO = new PaymentDTO(
+                $paymentData['order_id'],
+                $paymentData['method'],
+                $paymentData['payment_status'],
+                $totalAmount,
+                $paymentData['transaction_id'] ?? null
+            );
+
+
+            $paymentDetailDTO = new PaymentDetailDTO(
+                $paymentData['phone'],
+                $paymentData['email'],
+                $paymentData['address'],
+                $paymentData['note'] ?? null
+            );
+
+
+            $payment = $this->paymentService->processPayment($paymentDTO, $paymentDetailDTO);
+            $this->updateProductStock($order);
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment processed successfully',
+                'payment' => $payment
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Payment processing error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'error' => 'Payment processing failed',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
+    public function updateProductStock($order)
+    {
+        foreach ($order->items as $orderItem) {
+            $product = Product::find($orderItem->product_id);
+            if ($product) {
+                $product->decrement('quantity', $orderItem->quantity);
+            }
+            $product->save();
+        }
+    }
 
     // public function cancelPayment($paymentId)
     // {

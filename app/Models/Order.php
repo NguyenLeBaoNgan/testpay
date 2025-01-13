@@ -18,4 +18,10 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+    protected static function booted()
+    {
+        static::deleting(function ($order) {
+            $order->items()->delete();
+        });
+    }
 }

@@ -10,7 +10,6 @@ class PaymentDetailDTO extends Data
         public string $phone,
         public string $email,
         public string $address,
-
-        public ?string $note
+        public ?string $note,
     ) {}
 }
