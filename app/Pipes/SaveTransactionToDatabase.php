@@ -11,6 +11,10 @@ class SaveTransactionToDatabase
     public function handle(TransactionDTO $transactionDTO, \Closure $next)
     {
        Log::info('Transaction DTO', (array)$transactionDTO);
+       if ($transactionDTO->status !== 'completed') {
+        Log::info('Giao dịch chưa hoàn tất, không lưu vào cơ sở dữ liệu.');
+        return $next($transactionDTO);
+    }
         if ($transactionDTO->transferType === 'in') {
             $transactionDTO->amountIn = $transactionDTO->amountIn;
             $transactionDTO->amountOut = 0;

@@ -56,7 +56,7 @@ class PaymentController extends Controller
             $orderDTO = new OrderDTO(
                 $order->id,
                 $order->user_id,
-                $totalAmount,
+                'unpaid',
                 []
             );
 

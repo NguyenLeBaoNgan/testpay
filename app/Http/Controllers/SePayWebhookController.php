@@ -11,23 +11,37 @@ use App\Services\TransactionPipeline;
 use App\Pipes\ValidateTransaction;
 use App\Pipes\SaveTransactionToDatabase;
 use Illuminate\Pipeline\Pipeline;
+use App\Models\Payment;
 
 class SePayWebhookController extends Controller
 {
     public function webhook(Request $request)
     {
-        try{
+        try {
             Log::info('Webhook received', $request->all());
 
             $transactionDTO = TransactionDTO::fromArray($request->all());
 
-             TransactionPipeline::process($transactionDTO);
+
+
+        $payment = Payment::where('transaction_id', $transactionDTO->referenceNumber)->first();
+        if (!$payment) {
+            Log::error("Payment not found", ['referenceCode' => $request->referenceCode, 'transaction_id' => $transactionDTO->referenceNumber]);
+            throw new \Exception('Payment not found.');
+        }
+        $payment->update([
+            'payment_status' => $transactionDTO->status,
+        ]);
+
+        TransactionPipeline::process($transactionDTO);
+
             return response()->json(['success' => true, 'message' => 'Transaction processed']);
         } catch (\Exception $e) {
             Log::error('Error processing transaction', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
 
     // public function webhook(Request $request)
     // {
