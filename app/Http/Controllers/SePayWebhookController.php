@@ -32,6 +32,7 @@ class SePayWebhookController extends Controller
         $payment->update([
             'payment_status' => $transactionDTO->status,
         ]);
+        Log::info('Payment status updated', ['payment_id' => $payment->id]);
 
         TransactionPipeline::process($transactionDTO);
 

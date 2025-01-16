@@ -4,19 +4,30 @@ namespace App\Pipes;
 use App\DTOs\PaymentDTO;
 use App\Models\Payment;
 use Closure;
+use Illuminate\Support\Facades\Log;
+use App\Models\Order;
+
 
 class ProcessPaymentPipeline
 {
     public function handle(PaymentDTO $paymentDTO, Closure $next)
     {
-        $payment = Payment::create([
-            'order_id' => $paymentDTO->order_id,
-            'method' => $paymentDTO->method,
-            'payments_status' => 'pending',
-            'payment_amount' => $paymentDTO->payment_amount,
-            'transaction_id' => $paymentDTO->transaction_id,
-        ]);
 
+        $order = Order::where('id', $paymentDTO->order_id)->first();
+        Log::info('Creating payment record', ['order_id' => $order->id]);
+        // if (!$order) {
+        //     Log::error('Order not found', ['order_id' => $paymentDTO->id]);
+        //     throw new \Exception('Order not found.');
+        // }
+
+        $payment = Payment::create([
+            'order_id' => $order->id,
+            'method' => $paymentDTO->method,
+            'payment_status' => 'pending',
+            'payment_amount' => $paymentDTO->payment_amount,
+            'transaction_id' => $paymentDTO->transaction_id??null,
+        ]);
+        Log::info('Payment record created', ['payment_id' => $payment->id]);
         return $next($payment);
     }
 }

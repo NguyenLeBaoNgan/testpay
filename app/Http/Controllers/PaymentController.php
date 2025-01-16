@@ -49,8 +49,13 @@ class PaymentController extends Controller
                     'message' => 'Order not found'
                 ], 404);
             }
-
-
+            $existingPayment = Payment::where('order_id', $request->order_id)->first();
+            if ($existingPayment) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Payment already exists for this order'
+                ], 400);
+            }
             $totalAmount = $order->total_amount;
 
             $orderDTO = new OrderDTO(
@@ -61,6 +66,15 @@ class PaymentController extends Controller
             );
 
             $paymentData = $request->all();
+            if (!empty($paymentData['transaction_id'])) {
+                $existingPayment = Payment::where('transaction_id', $paymentData['transaction_id'])->first();
+                if ($existingPayment) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'Transaction ID already exists'
+                    ], 400);
+                }
+            }
 
             $paymentDTO = new PaymentDTO(
                 $paymentData['order_id'],
@@ -70,7 +84,6 @@ class PaymentController extends Controller
                 $paymentData['transaction_id'] ?? null
             );
 
-
             $paymentDetailDTO = new PaymentDetailDTO(
                 $paymentData['phone'],
                 $paymentData['email'],
@@ -78,8 +91,10 @@ class PaymentController extends Controller
                 $paymentData['note'] ?? null
             );
 
-
             $payment = $this->paymentService->processPayment($paymentDTO, $paymentDetailDTO);
+
+            Log::info('Payment successfully created', ['payment_id' => $payment->id]);
+
             $this->updateProductStock($order);
             return response()->json([
                 'success' => true,
@@ -94,6 +109,7 @@ class PaymentController extends Controller
             ], 500);
         }
     }
+
 
     public function updateProductStock($order)
     {

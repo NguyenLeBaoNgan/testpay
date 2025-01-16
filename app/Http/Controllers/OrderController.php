@@ -44,7 +44,7 @@ class OrderController extends Controller
             }
         }
         $order->update(['total_amount' => $totalAmount]);
-
+        Log::info('Order created', ['order_id' => $order->id]);
         // $order->update(['status' => 'Paid']);
         return response()->json([
             'success' => true,
@@ -52,6 +52,7 @@ class OrderController extends Controller
             'order_id' => $order->id,
             'total_amount' => $totalAmount
         ]);
+
     }
 
     public function payOrder($orderId)
