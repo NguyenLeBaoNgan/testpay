@@ -2,7 +2,9 @@
 
 namespace App\Pipes;
 
+use App\DTOs\PaymentDTO;
 use App\DTOs\TransactionDTO;
+use App\Models\Payment;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Log;
 
@@ -16,15 +18,17 @@ class SaveTransactionToDatabase
     //     return $next($transactionDTO);
     // }
         if ($transactionDTO->transferType === 'in') {
-            $transactionDTO->amountIn = $transactionDTO->amountIn;
+            $transactionDTO->amountIn = $transactionDTO->transferAmount ?? 0;
             $transactionDTO->amountOut = 0;
         } else {
-            $transactionDTO->amountOut = $transactionDTO->amountOut;
+            $transactionDTO->amountOut = $transactionDTO->transferAmount ?? 0;
             //$transactionDTO->amountIn = 0;
         }
         if ($transactionDTO->amountOut === null) {
             $transactionDTO->amountOut = 0;
         }
+
+        // $transactionDTO->referenceNumber = $transactionDTO->referenceCode;
         Transaction::create([
             'gateway' => $transactionDTO->gateway,
             'transaction_date' => now(),

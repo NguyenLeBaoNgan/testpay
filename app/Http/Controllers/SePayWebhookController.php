@@ -19,22 +19,37 @@ class SePayWebhookController extends Controller
     {
         try {
             Log::info('Webhook received', $request->all());
-
+            $referenceNumber = $request->input('referenceCode');
             $transactionDTO = TransactionDTO::fromArray($request->all());
+            $data = $request->all();
+          //  $transactionDTO->referenceNumber = $referenceNumber;
 
+            $payment = Payment::where('transaction_id', $data['referenceCode'])->first();
+            if (!$payment) {
+                Log::error("Payment not found", ['referenceCode' => $data['referenceCode'], 'transaction_id' => $data['transaction_id']]);
+                throw new \Exception('Payment not found.');
+            }
+            // $payment->update([
+            //     'payment_status' => $transactionDTO->status,
+            // ]);
+            if($transactionDTO->status == 'success') {
+                $payment->update([
+                    'payment_status' => 'completed',
+                    'amount_in' => $data['transferAmount'],
+                    'amount_out' => $data['transferAmount'],
+                    'reference_number' => $data['referenceCode'],
+                ]);
+                Log::info('Payment status updated', ['payment_id' => $payment->id]);
+            } else {
+                $payment->update([
+                    'payment_status' => 'failed',
+                ]);
+                Log::info('Payment status updated to failed', ['payment_id' => $payment->id]);
+            }
 
+            Log::info('Payment status updated', ['payment_id' => $payment->id]);
 
-        $payment = Payment::where('transaction_id', $transactionDTO->referenceNumber)->first();
-        if (!$payment) {
-            Log::error("Payment not found", ['referenceCode' => $request->referenceCode, 'transaction_id' => $transactionDTO->referenceNumber]);
-            throw new \Exception('Payment not found.');
-        }
-        $payment->update([
-            'payment_status' => $transactionDTO->status,
-        ]);
-        Log::info('Payment status updated', ['payment_id' => $payment->id]);
-
-        TransactionPipeline::process($transactionDTO);
+            TransactionPipeline::process($transactionDTO);
 
             return response()->json(['success' => true, 'message' => 'Transaction processed']);
         } catch (\Exception $e) {

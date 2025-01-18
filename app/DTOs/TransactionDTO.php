@@ -17,6 +17,7 @@ class TransactionDTO
     public ?string $body;
     public ?string $transferType;
     public ?string $status = 'pending';
+    // public ?string $referenceCode;
 
     public static function fromArray(array $data): self
     {
