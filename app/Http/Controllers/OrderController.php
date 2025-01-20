@@ -215,6 +215,57 @@ class OrderController extends Controller
             'message' => count($ordersToDelete) . ' unpaid orders have been deleted.',
         ]);
     }
+
+    public function getOrderHistory()
+    {
+        $userId = auth()->id(); Log::debug('User ID: ' . $userId);
+        $orders = Order::where('user_id', $userId)->get();
+        Log::debug('Total Orders: ' . $orders->count());
+        $orderHistory = [];
+
+        foreach ($orders as $order) {
+            $items = [];
+
+            // Lấy danh sách các items từ order và tạo DTO cho từng item
+            foreach ($order->items as $item) {
+                $product = Product::find($item->product_id);
+                $product = $item->product;
+                $quantity = is_numeric($item->quantity) ? (int)$item->quantity : 0;
+$items[] = new OrderItemDTO(
+    $product->id,
+    $quantity,
+    $item->price,
+    $product->name,
+
+); Log::debug('Item Quantity: ' . json_encode($item->quantity));
+
+                // $items[] = new OrderItemDTO(
+                //     $product->id,
+                //     $product->name,
+
+                //     $item->price,
+                //     (int)$item->quantity,
+                //     $item->total
+                // );
+            }
+
+
+            // Thêm thông tin order vào mảng history
+            $orderHistory[] = [
+
+                'order_id' => $order->id,
+                'total_amount' => $order->total_amount,
+                'status' => $order->status,
+                'items' => $items,
+                'created_at' => $order->created_at->toDateString(), 
+            ];
+        }
+        Log::debug('Order History: ', $orderHistory);
+        // Trả về kết quả dưới dạng JSON
+        return response()->json($orderHistory, 200);
+    }
+
+
     // public function syncCart(OrderDTO $orderDTO)
     // {
     //     $cart = [];

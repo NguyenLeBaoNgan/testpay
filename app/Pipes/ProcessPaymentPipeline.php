@@ -3,6 +3,7 @@ namespace App\Pipes;
 
 use App\DTOs\PaymentDTO;
 use App\Models\Payment;
+use App\DTOs\TransactionDTO;
 use Closure;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;

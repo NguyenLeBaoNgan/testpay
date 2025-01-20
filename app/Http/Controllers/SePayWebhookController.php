@@ -18,44 +18,65 @@ class SePayWebhookController extends Controller
     public function webhook(Request $request)
     {
         try {
-            Log::info('Webhook received', $request->all());
-            $referenceNumber = $request->input('referenceCode');
-            $transactionDTO = TransactionDTO::fromArray($request->all());
             $data = $request->all();
-          //  $transactionDTO->referenceNumber = $referenceNumber;
+            $transactionId = $data['referenceCode'] ?? null; // ID giao dịch từ webhook
+            $content = $data['content'] ?? null;
+            Log::info('Webhook received', $request->all());
+            Log::info('content', ['content' => $data['content']]);
+            // Lấy order_id từ content
+            $orderId = $this->extractOrderId($content);
 
-            $payment = Payment::where('transaction_id', $data['referenceCode'])->first();
-            if (!$payment) {
-                Log::error("Payment not found", ['referenceCode' => $data['referenceCode'], 'transaction_id' => $data['transaction_id']]);
-                throw new \Exception('Payment not found.');
+            if (!$transactionId || !$orderId) {
+                Log::error("Missing transaction ID or Order ID", ['transaction_id' => $transactionId, 'order_id' => $orderId]);
+                return response()->json(['error' => 'Transaction ID or Order ID is missing'], 400);
             }
-            // $payment->update([
-            //     'payment_status' => $transactionDTO->status,
-            // ]);
-            if($transactionDTO->status == 'success') {
-                $payment->update([
-                    'payment_status' => 'completed',
-                    'amount_in' => $data['transferAmount'],
-                    'amount_out' => $data['transferAmount'],
-                    'reference_number' => $data['referenceCode'],
+
+            // Tạo transaction mới
+            $transaction = Transaction::create([
+                'transaction_id' => $transactionId,
+                'gateway' => $data['gateway'],
+                'accountNumber' => $data['accountNumber'],
+                'transferType' => $data['transferType'],
+                'amount_in' => $data['transferAmount'] ?? 0,
+                'transactionContent' => $content,
+            ]);
+
+            // Cập nhật transaction_id trong bảng payments
+            $payment = Payment::where('order_id', $orderId)->first();
+            if ($payment) {
+                $payment->transaction_id = $transaction->id;
+                $payment->reference_number  = $transactionId;
+                $payment->save();
+
+                Log::info('Payment updated with transaction ID', [
+                    'payment_id' => $payment->id,
+                    'transaction_id' => $transaction->id,
+                    'referenceCode' => $payment->reference_number,
                 ]);
-                Log::info('Payment status updated', ['payment_id' => $payment->id]);
             } else {
-                $payment->update([
-                    'payment_status' => 'failed',
-                ]);
-                Log::info('Payment status updated to failed', ['payment_id' => $payment->id]);
+                Log::error("Payment not found for order_id", ['order_id' => $orderId]);
             }
 
-            Log::info('Payment status updated', ['payment_id' => $payment->id]);
-
-            TransactionPipeline::process($transactionDTO);
-
-            return response()->json(['success' => true, 'message' => 'Transaction processed']);
+            return response()->json(['message' => 'Webhook processed successfully'], 200);
         } catch (\Exception $e) {
-            Log::error('Error processing transaction', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error("Error processing webhook", ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Error processing webhook'], 500);
         }
+    }
+
+    // Hàm để lấy order_id từ nội dung
+    private function extractOrderId($content)
+    {
+        if (!$content) {
+            return null;
+        }
+
+        // Giả sử order_id nằm giữa chuỗi "-DH" và "-"
+        if (preg_match('/-DH(.*?)\-/', $content, $matches)) {
+            return $matches[1] ?? null;
+        }
+
+        return null;
     }
 
 

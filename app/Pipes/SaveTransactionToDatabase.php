@@ -27,7 +27,7 @@ class SaveTransactionToDatabase
         if ($transactionDTO->amountOut === null) {
             $transactionDTO->amountOut = 0;
         }
-
+        $transactionDTO->referenceNumber = $transactionDTO->referenceCode ?? null;
         // $transactionDTO->referenceNumber = $transactionDTO->referenceCode;
         Transaction::create([
             'gateway' => $transactionDTO->gateway,
@@ -43,6 +43,7 @@ class SaveTransactionToDatabase
             'body' => json_encode($transactionDTO),
         ]);
         Log::info('save', (array)$transactionDTO);
+        Log::info('Transaction saved to database', ['reference_number' => $transactionDTO->referenceNumber]);
         return $next($transactionDTO);
     }
 }

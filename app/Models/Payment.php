@@ -21,4 +21,9 @@ class Payment extends Model
     {
         return $this->hasOne(PaymentDetails::class);
     }
+
+    public function transaction()
+    {
+        return $this->hasOne(Transaction::class, 'id', 'transaction_id');
+    }
 }

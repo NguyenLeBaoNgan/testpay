@@ -75,7 +75,9 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     // Route::put('roles/{id}', [RoleController::class, 'update']);
     // Route::delete('roles/{id}', [RoleController::class, 'destroy']);
 });
-
+// Route::middleware('auth:sanctum')->prefix('orders')->group(function () {
+//     Route::get('/history', [OrderController::class, 'getOrderHistory']);
+// });
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     //     Route::post('orders', [OrderController::class, 'store']);
     // Route::put('orders/{orderId}', [OrderController::class, 'update']);
@@ -91,3 +93,5 @@ Route::group([
 ], function () {
     Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
 });
+
+Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
