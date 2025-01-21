@@ -21,13 +21,15 @@ class SePayWebhookController extends Controller
             $data = $request->all();
             $transactionId = $data['referenceCode'] ?? null; // ID giao dịch từ webhook
             $content = $data['content'] ?? null;
+            $status = $data['status'] ?? null;
+
             Log::info('Webhook received', $request->all());
             Log::info('content', ['content' => $data['content']]);
             // Lấy order_id từ content
             $orderId = $this->extractOrderId($content);
 
-            if (!$transactionId || !$orderId) {
-                Log::error("Missing transaction ID or Order ID", ['transaction_id' => $transactionId, 'order_id' => $orderId]);
+            if (!$transactionId || !$orderId || !$status) {
+                Log::error("Missing transaction ID or Order ID", ['transaction_id' => $transactionId, 'order_id' => $orderId, 'status' => $status]);
                 return response()->json(['error' => 'Transaction ID or Order ID is missing'], 400);
             }
 
@@ -39,6 +41,7 @@ class SePayWebhookController extends Controller
                 'transferType' => $data['transferType'],
                 'amount_in' => $data['transferAmount'] ?? 0,
                 'transactionContent' => $content,
+                'status' => $status,
             ]);
 
             // Cập nhật transaction_id trong bảng payments
@@ -46,12 +49,20 @@ class SePayWebhookController extends Controller
             if ($payment) {
                 $payment->transaction_id = $transaction->id;
                 $payment->reference_number  = $transactionId;
+                $payment->status = $status === 'completed' ? 'paid' : 'failed';
                 $payment->save();
 
+                $order = $payment->order;
+            if ($order) {
+                $order->status = $status === 'completed' ? 'completed' : 'canceled'; // Cập nhật trạng thái đơn hàng
+                $order->save();
+            }
                 Log::info('Payment updated with transaction ID', [
                     'payment_id' => $payment->id,
                     'transaction_id' => $transaction->id,
                     'referenceCode' => $payment->reference_number,
+                    'status' => $payment->status,
+
                 ]);
             } else {
                 Log::error("Payment not found for order_id", ['order_id' => $orderId]);

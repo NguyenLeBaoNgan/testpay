@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
+
 class OrderController extends Controller
 {
     public function store(OrderDTO $orderDTO)
@@ -18,7 +19,7 @@ class OrderController extends Controller
         if ($checkStockResponse->getStatusCode() !== 200) {
             return $checkStockResponse;
         }
-       $totalAmount = 0;
+        $totalAmount = 0;
         $userId = auth()->id();
 
         $order = Order::create([
@@ -52,7 +53,6 @@ class OrderController extends Controller
             'order_id' => $order->id,
             'total_amount' => $totalAmount
         ]);
-
     }
 
     public function payOrder($orderId)
@@ -218,8 +218,12 @@ class OrderController extends Controller
 
     public function getOrderHistory()
     {
-        $userId = auth()->id(); Log::debug('User ID: ' . $userId);
-        $orders = Order::where('user_id', $userId)->get();
+        $userId = auth()->id();
+        Log::debug('User ID: ' . $userId);
+        $perPage = request()->query('perPage', 10);
+
+        // $orders = Order::where('user_id', $userId)->get();
+        $orders = Order::where('user_id', $userId)->paginate($perPage);
         Log::debug('Total Orders: ' . $orders->count());
         $orderHistory = [];
 
@@ -231,13 +235,14 @@ class OrderController extends Controller
                 $product = Product::find($item->product_id);
                 $product = $item->product;
                 $quantity = is_numeric($item->quantity) ? (int)$item->quantity : 0;
-$items[] = new OrderItemDTO(
-    $product->id,
-    $quantity,
-    $item->price,
-    $product->name,
+                $items[] = new OrderItemDTO(
+                    $product->id,
+                    $quantity,
+                    $item->price,
+                    $product->name,
 
-); Log::debug('Item Quantity: ' . json_encode($item->quantity));
+                );
+                Log::debug('Item Quantity: ' . json_encode($item->quantity));
 
                 // $items[] = new OrderItemDTO(
                 //     $product->id,
@@ -257,12 +262,17 @@ $items[] = new OrderItemDTO(
                 'total_amount' => $order->total_amount,
                 'status' => $order->status,
                 'items' => $items,
-                'created_at' => $order->created_at->toDateString(), 
+                'created_at' => $order->created_at->toDateString(),
             ];
         }
         Log::debug('Order History: ', $orderHistory);
-        // Trả về kết quả dưới dạng JSON
-        return response()->json($orderHistory, 200);
+       
+        return response()->json([
+            'data' => $orderHistory,
+            'current_page' => $orders->currentPage(),
+            'last_page' => $orders->lastPage(),
+            'total' => $orders->total(),
+        ], 200);
     }
 
 

@@ -95,3 +95,4 @@ Route::group([
 });
 
 Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
+Route::get('/revenue', [PaymentController::class, 'getMonthlyRevenue']);

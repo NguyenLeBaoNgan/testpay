@@ -18,6 +18,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Exception;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
@@ -106,6 +107,27 @@ class PaymentController extends Controller
                 $product->decrement('quantity', $orderItem->quantity);
             }
             $product->save();
+        }
+    }
+    public function getMonthlyRevenue(Request $request)
+    {
+        $year = $request->input('year', Carbon::now()->year);
+
+        try {
+
+            $monthlyRevenue = Payment::where('payments_status', 'completed')
+                ->whereYear('created_at', $year)
+                ->selectRaw('MONTH(created_at) as month, SUM(payment_amount) as total')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
+            return response()->json([
+                'year' => $year,
+                'monthly_revenue' => $monthlyRevenue,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Error calculating monthly revenue', 'message' => $e->getMessage()], 500);
         }
     }
 
