@@ -24,15 +24,16 @@ class SePayWebhookController extends Controller
             $status = $data['status'] ?? null;
 
             Log::info('Webhook received', $request->all());
-            Log::info('content', ['content' => $data['content']]);
+
             // Lấy order_id từ content
             $orderId = $this->extractOrderId($content);
-
-            if (!$transactionId || !$orderId || !$status) {
+            Log::info('content', ['content' => $data['content']]);
+            if (!$transactionId || !$orderId ) {
                 Log::error("Missing transaction ID or Order ID", ['transaction_id' => $transactionId, 'order_id' => $orderId, 'status' => $status]);
                 return response()->json(['error' => 'Transaction ID or Order ID is missing'], 400);
             }
-
+            $paymentSuccess = $this->isPaymentSuccessful($content, $status);
+            $transactionStatus = $paymentSuccess ? 'completed' : 'pending';
             // Tạo transaction mới
             $transaction = Transaction::create([
                 'transaction_id' => $transactionId,
@@ -49,19 +50,19 @@ class SePayWebhookController extends Controller
             if ($payment) {
                 $payment->transaction_id = $transaction->id;
                 $payment->reference_number  = $transactionId;
-                $payment->status = $status === 'completed' ? 'paid' : 'failed';
+                $payment->payments_status = $paymentSuccess  ? 'completed' : 'failed';
                 $payment->save();
 
                 $order = $payment->order;
             if ($order) {
-                $order->status = $status === 'completed' ? 'completed' : 'canceled'; // Cập nhật trạng thái đơn hàng
+                $order->status = $paymentSuccess   ? 'paid' : 'cancelled'; // Cập nhật trạng thái đơn hàng
                 $order->save();
             }
                 Log::info('Payment updated with transaction ID', [
                     'payment_id' => $payment->id,
                     'transaction_id' => $transaction->id,
                     'referenceCode' => $payment->reference_number,
-                    'status' => $payment->status,
+                    'status' => $payment->payments_status,
 
                 ]);
             } else {
@@ -90,48 +91,81 @@ class SePayWebhookController extends Controller
         return null;
     }
 
+    private function isPaymentSuccessful($content, $status)
+    {
 
-    // public function webhook(Request $request)
+        if ($status === 'completed') {
+            return true;
+        }
+
+
+        if ($content) {
+            $keywords = ['CHUYEN TIEN', 'PAYMENT', 'THANH TOAN'];
+            foreach ($keywords as $keyword) {
+                if (stripos($content, $keyword) !== false) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    // public function refund(Request $request)
     // {
+    //     try {
+    //         $transactionId = $request->input('transaction_id');
+    //         $refundAmount = $request->input('refund_amount');
+    //         $reason = $request->input('reason');
 
-    //     // $token = $request->header('Authorization');
+    //         // Tìm giao dịch
+    //         $transaction = Transaction::findOrFail($transactionId);
 
-    //     // $expectedToken = 'Bearer  ';
+    //         // Kiểm tra trạng thái giao dịch
+    //         if ($transaction->status !== 'success') {
+    //             return response()->json(['error' => 'Transaction not eligible for refund'], 400);
+    //         }
 
-    //     // Log::info('Received Authorization Token:', ['token' => $token]);
-    //     // Log::info('Expected Authorization Token:', ['expected_token' => $expectedToken]);
+    //         // Kiểm tra số tiền hoàn lại
+    //         if ($refundAmount > $transaction->amount_in) {
+    //             return response()->json(['error' => 'Refund amount exceeds transaction amount'], 400);
+    //         }
 
+    //         // Gửi yêu cầu hoàn tiền tới cổng thanh toán
+    //         $response = $this->paymentGateway->refund($transaction->transaction_id, $refundAmount, $reason);
 
-    //     // if ($token !== $expectedToken) {
-    //     //     Log::error('Unauthorized access to webhook', ['request' => $request->all()]);
-    //     //     return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-    //     // }
+    //         if ($response['success']) {
+    //             // Cập nhật giao dịch với trạng thái hoàn tiền
+    //             $transaction->refund_status = 'success';
+    //             $transaction->refunded_amount = $refundAmount;
+    //             $transaction->save();
 
-    //     $data = $request->all();
-    //     Log::info($request->all());
-    //     // Log::info('Received data:', ['data' => $data]);
+    //             // Ghi log hoàn tiền thành công
+    //             Log::info("Refund successful", [
+    //                 'transaction_id' => $transaction->id,
+    //                 'refund_amount' => $refundAmount,
+    //                 'reason' => $reason
+    //             ]);
 
-    //     if ($data['transferType'] === 'in' || $data['transferType'] === 'out') {
-    //         $transactionDTO = TransactionDTO::fromArray($data);
+    //             return response()->json(['success' => true, 'message' => 'Refund successful']);
+    //         } else {
+    //             // Ghi log hoàn tiền thất bại
+    //             Log::error("Refund failed", [
+    //                 'transaction_id' => $transaction->id,
+    //                 'error' => $response['message']
+    //             ]);
 
-
-    //         Transaction::create([
-    //             'gateway' => $transactionDTO->gateway,
-    //             'transaction_date' => now(),
-    //             'account_number' => $transactionDTO->accountNumber,
-    //             'sub_account' => $transactionDTO->subAccount,
-    //             'amount_in' => $transactionDTO->amountIn,
-    //             'amount_out' => $transactionDTO->amountOut,
-    //             'accumulated' => $transactionDTO->accumulated,
-    //             'code' => $transactionDTO->code,
-    //             'transaction_content' => $transactionDTO->transactionContent,
-    //             'reference_number' => $transactionDTO->referenceNumber,
-    //             'body' => $transactionDTO->body,
+    //             return response()->json(['error' => 'Refund failed: ' . $response['message']], 400);
+    //         }
+    //     } catch (\Exception $e) {
+    //         // Ghi log lỗi hệ thống
+    //         Log::error("Error during refund process", [
+    //             'error' => $e->getMessage()
     //         ]);
 
-    //         return response()->json(['success' => true, 'message' => 'Received payment']);
+    //         return response()->json(['error' => 'Error processing refund'], 500);
     //     }
-
-    //     return response()->json(['success' => false, 'message' => 'Unhandled transfer type']);
     // }
+
 }
