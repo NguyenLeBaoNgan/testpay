@@ -112,60 +112,74 @@ class SePayWebhookController extends Controller
     }
 
 
-    // public function refund(Request $request)
-    // {
-    //     try {
-    //         $transactionId = $request->input('transaction_id');
-    //         $refundAmount = $request->input('refund_amount');
-    //         $reason = $request->input('reason');
+//     public function refund(TransactionDTO $transactionDTO)
+// {
+//     try {
+//         // Lấy thông tin giao dịch từ DTO
+//         $transactionId = $transactionDTO->transaction_id;
+//         $refundAmount = $transactionDTO->refund_amount;
+//         $reason = $transactionDTO->reason;
 
-    //         // Tìm giao dịch
-    //         $transaction = Transaction::findOrFail($transactionId);
+//         // Tìm giao dịch bằng ULID
+//         $transaction = Transaction::where('transaction_ulid', $transactionId)->firstOrFail();
 
-    //         // Kiểm tra trạng thái giao dịch
-    //         if ($transaction->status !== 'success') {
-    //             return response()->json(['error' => 'Transaction not eligible for refund'], 400);
-    //         }
+//         // Kiểm tra trạng thái giao dịch
+//         if ($transaction->status !== 'success') {
+//             return response()->json(['error' => 'Transaction not eligible for refund'], 400);
+//         }
 
-    //         // Kiểm tra số tiền hoàn lại
-    //         if ($refundAmount > $transaction->amount_in) {
-    //             return response()->json(['error' => 'Refund amount exceeds transaction amount'], 400);
-    //         }
+//         // Kiểm tra số tiền hoàn lại
+//         if ($refundAmount > $transaction->amount_in) {
+//             return response()->json(['error' => 'Refund amount exceeds transaction amount'], 400);
+//         }
 
-    //         // Gửi yêu cầu hoàn tiền tới cổng thanh toán
-    //         $response = $this->paymentGateway->refund($transaction->transaction_id, $refundAmount, $reason);
+//         // Lấy thông tin tài khoản khách hàng từ bảng Account
+//         $account = $transaction->account;
+//         if (!$account) {
+//             return response()->json(['error' => 'Customer account not found'], 404);
+//         }
 
-    //         if ($response['success']) {
-    //             // Cập nhật giao dịch với trạng thái hoàn tiền
-    //             $transaction->refund_status = 'success';
-    //             $transaction->refunded_amount = $refundAmount;
-    //             $transaction->save();
+//         // Gửi yêu cầu hoàn tiền tới cổng thanh toán
+//         $response = $this->paymentGateway->refund(
+//             $transaction->transaction_ulid,
+//             $refundAmount,
+//             $reason,
+//             $account->account_number
+//         );
 
-    //             // Ghi log hoàn tiền thành công
-    //             Log::info("Refund successful", [
-    //                 'transaction_id' => $transaction->id,
-    //                 'refund_amount' => $refundAmount,
-    //                 'reason' => $reason
-    //             ]);
+//         if ($response['success']) {
 
-    //             return response()->json(['success' => true, 'message' => 'Refund successful']);
-    //         } else {
-    //             // Ghi log hoàn tiền thất bại
-    //             Log::error("Refund failed", [
-    //                 'transaction_id' => $transaction->id,
-    //                 'error' => $response['message']
-    //             ]);
+//             $transaction->refund_status = 'success';
+//             $transaction->refunded_amount = $refundAmount;
+//             $transaction->save();
 
-    //             return response()->json(['error' => 'Refund failed: ' . $response['message']], 400);
-    //         }
-    //     } catch (\Exception $e) {
-    //         // Ghi log lỗi hệ thống
-    //         Log::error("Error during refund process", [
-    //             'error' => $e->getMessage()
-    //         ]);
 
-    //         return response()->json(['error' => 'Error processing refund'], 500);
-    //     }
-    // }
+//             Log::info("Refund successful", [
+//                 'transaction_id' => $transaction->transaction_ulid,
+//                 'refund_amount' => $refundAmount,
+//                 'reason' => $reason,
+//                 'customer_account' => $account->account_number
+//             ]);
+
+//             return response()->json(['success' => true, 'message' => 'Refund successful']);
+//         } else {
+
+//             Log::error("Refund failed", [
+//                 'transaction_id' => $transaction->transaction_ulid,
+//                 'error' => $response['message']
+//             ]);
+
+//             return response()->json(['error' => 'Refund failed: ' . $response['message']], 400);
+//         }
+//     } catch (\Exception $e) {
+
+//         Log::error("Error during refund process", [
+//             'error' => $e->getMessage()
+//         ]);
+
+//         return response()->json(['error' => 'Error processing refund'], 500);
+//     }
+// }
+
 
 }

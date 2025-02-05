@@ -11,6 +11,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SePayWebhookController;
+use App\Http\Controllers\AccountController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
@@ -96,3 +97,5 @@ Route::group([
 
 Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
 Route::get('/revenue', [PaymentController::class, 'getMonthlyRevenue']);
+
+Route::apiResource('accounts', AccountController::class)->middleware('auth:sanctum');

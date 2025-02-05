@@ -12,6 +12,7 @@ use App\Models\Payment;
 use Illuminate\Support\Facades\Log;
 use App\Models\Order;
 use App\Models\PaymentDetails;
+use App\Models\Transaction;
 
 
 
@@ -81,4 +82,65 @@ class PaymentService
 
         return $payment;
     }
+
+    // public function refund(string $transactionId, float $refundAmount, string $reason)
+    // {
+    //     try {
+    //         $transaction = Transaction::where('transaction_id', $transactionId)->first();
+    //         if (!$transaction) {
+    //             throw new \Exception('Transaction not found.');
+    //         }
+
+    //         $payment = Payment::where('transaction_id', $transaction->id)->first();
+    //         if (!$payment) {
+    //             throw new \Exception('Payment not found.');
+    //         }
+
+    //         $order = Order::find($payment->order_id);
+    //         if (!$order) {
+    //             throw new \Exception('Order not found.');
+    //         }
+
+    //         if ($order->status !== 'paid') {
+    //             throw new \Exception('Cannot refund an order that has not been paid.');
+    //         }
+
+    //         if ($refundAmount > $payment->amount) {
+    //             throw new \Exception('Refund amount exceeds the payment amount.');
+    //         }
+
+    //         $paymentGateway = resolve(PaymentService::class);
+    //         $response = $paymentGateway->refund($transaction->transaction_id, $refundAmount, $reason);
+
+    //         if (!$response['success']) {
+    //             throw new \Exception('Refund failed: ' . $response['message']);
+    //         }
+
+    //         $payment->update([
+    //             'status' => 'refunded',
+    //             'refunded_amount' => $refundAmount
+    //         ]);
+
+    //         $order->update([
+    //             'status' => 'refunded'
+    //         ]);
+
+
+    //         Log::info('Refund successful', [
+    //             'transaction_id' => $transaction->transaction_id,
+    //             'refund_amount' => $refundAmount,
+    //             'reason' => $reason
+    //         ]);
+
+    //         return response()->json(['success' => true, 'message' => 'Refund successful.']);
+    //     } catch (\Exception $e) {
+    //         Log::error('Refund failed', [
+    //             'transaction_id' => $transactionId,
+    //             'error' => $e->getMessage()
+    //         ]);
+
+    //         return response()->json(['error' => $e->getMessage()], 400);
+    //     }
+    // }
+
 }

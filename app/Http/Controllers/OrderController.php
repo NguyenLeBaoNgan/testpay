@@ -13,6 +13,12 @@ use Illuminate\Support\Carbon;
 
 class OrderController extends Controller
 {
+    public function index()
+    {
+        $orders = Order::with('user','items')->get();
+        // return Order::all();
+        return response()->json($orders);
+    }
     public function store(OrderDTO $orderDTO)
     {
         $checkStockResponse = $this->checkStock($orderDTO);
@@ -266,7 +272,7 @@ class OrderController extends Controller
             ];
         }
         Log::debug('Order History: ', $orderHistory);
-       
+
         return response()->json([
             'data' => $orderHistory,
             'current_page' => $orders->currentPage(),
