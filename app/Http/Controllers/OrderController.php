@@ -280,7 +280,82 @@ class OrderController extends Controller
             'total' => $orders->total(),
         ], 200);
     }
+    public function adminUpdate(OrderDTO $orderDTO, $orderId)
+    {
+        // Tìm đơn hàng theo orderId
+        $order = Order::find($orderId);
+        if (!$order) {
+            return response()->json(['error' => 'Order not found'], 404);
+        }
 
+        // Cập nhật trạng thái đơn hàng (nếu có)
+        if (isset($orderDTO->status)) {
+            $order->status = $orderDTO->status;
+        }
+
+        // Nhóm các sản phẩm theo product_id và tính tổng số lượng
+        $groupedItems = collect($orderDTO->items)->groupBy('product_id')->map(function ($items) {
+            return [
+                'product_id' => $items->first()['product_id'],
+                'quantity' => $items->sum('quantity'),
+            ];
+        })->values();
+
+        // Lấy danh sách product_id mới từ DTO
+        $newProductIds = collect($orderDTO->items)->pluck('product_id')->toArray();
+
+        // Lấy danh sách sản phẩm hiện tại trong đơn hàng, key bằng product_id
+        $orderItemIds = $order->items->keyBy('product_id');
+
+        // Tính toán tổng số tiền của đơn hàng
+        $totalAmount = 0;
+
+        // Duyệt qua từng sản phẩm trong DTO để cập nhật hoặc thêm mới
+        foreach ($orderDTO->items as $item) {
+            $product = Product::find($item['product_id']);
+
+            // Kiểm tra sản phẩm có tồn tại không
+            if (!$product) {
+                return response()->json(['error' => 'Product not found: ' . $item['product_id']], 404);
+            }
+
+            // Tính tổng tiền cho sản phẩm hiện tại
+            $itemTotal = $item['quantity'] * $product->price;
+            $totalAmount += $itemTotal;
+
+            // Nếu sản phẩm đã tồn tại trong đơn hàng, cập nhật thông tin
+            if (isset($orderItemIds[$item['product_id']])) {
+                $orderItem = $orderItemIds[$item['product_id']];
+                $orderItem->update([
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price,
+                    'total' => $itemTotal,
+                ]);
+            } else {
+                // Nếu sản phẩm chưa tồn tại, thêm mới vào đơn hàng
+                OrderItem::create([
+                    'id' => (string) Str::ulid(),
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $item['quantity'],
+                    'price' => $product->price,
+                    'total' => $itemTotal,
+                ]);
+            }
+        }
+
+        // Xóa các sản phẩm không còn trong đơn hàng
+        $order->items()->whereNotIn('product_id', $newProductIds)->delete();
+
+        // Cập nhật tổng số tiền của đơn hàng
+        $order->total_amount = $totalAmount;
+
+        // Lưu thay đổi vào database
+        $order->save();
+
+        // Trả về thông tin đơn hàng đã cập nhật
+        return response()->json($order);
+    }
 
     // public function syncCart(OrderDTO $orderDTO)
     // {

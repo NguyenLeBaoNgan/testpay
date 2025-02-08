@@ -18,9 +18,9 @@ class RoleController extends Controller
     public function index()
     {
         $roles = Role::all();
-        if (Auth::user()->hasRole('admin')) {
-            $roles = $roles->where('name', '!=', 'super-admin');
-        }
+        // if (Auth::user()->hasRole('admin')) {
+        //     $roles = $roles->where('name', '!=', 'super-admin');
+        // }
         return response()->json($roles);
     }
 

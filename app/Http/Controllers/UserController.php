@@ -21,7 +21,19 @@ class UserController extends Controller
     }
     public function getalluser()
     {
-        return User::all();
+        $users = User::with('roles')->get()->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'roles' => $user->roles->pluck('name'),
+                'status' => $user->status,
+            ];
+        });
+
+        return response()->json($users);
+        // return response()->json($users);
+        // return User::all();
     }
 
     public function store(UserDTO $userDTO)
@@ -96,9 +108,13 @@ class UserController extends Controller
         if (!empty($userDTO->roles)) {
             $user->syncRoles($userDTO->roles);
         }
+        if(!empty($userDTO-> status)){
+            $user->status = $userDTO->status;
+        }
         $user->save();
+      //  $user->load('roles');
 
-        return response()->json($user);
+      return response()->json(array_merge($user->toArray(), ['roles' => $userDTO->roles]));
     }
     public function destroy($id)
     {

@@ -22,7 +22,9 @@ class UserDTO extends Data
         #[ArrayType]
         public array $roles = [],
         #[ArrayType]
-        public array $permissions = []
+        public array $permissions = [],
+
+         public ?string $status= "active",
     ) {
     }
 }
