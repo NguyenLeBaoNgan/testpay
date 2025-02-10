@@ -48,11 +48,18 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin'])->group(function ()
     Route::post('/updateuser/{id}', [UserController::class, 'updateuser']);
 });
 Route::middleware(['auth:sanctum', 'role:super-admin'])->put('/user/{id}/permissions', [PermissionController::class, 'update']);
-
+Route::put('/categories/{id}', [CategoryController::class, 'update']);
+Route::post('/categories', [CategoryController::class, 'store']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
+// Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 //ts
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-    Route::apiResource('categories', CategoryController::class);
+    // Route::apiResource('categories', CategoryController::class);
     Route::get('/categories/search/{name}', [CategoryController::class, 'searchCategory']);
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+   Route::post('/categories', [CategoryController::class, 'store']);
+   Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
     Route::apiResource('products', ProductController::class);
     Route::post('/products/search', [ProductController::class, 'searchProduct']);
@@ -66,7 +73,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 });
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
 Route::apiResource('products', ProductController::class);
-Route::apiResource('categories', CategoryController::class);
+// Route::apiResource('categories', CategoryController::class);
 Route::post('/check-stock', [OrderController::class, 'checkStock']);
 //role
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {

@@ -24,20 +24,31 @@ class CategoryController extends Controller
 
     public function store(CategoryDTO $categoryDTO)
     {
-        $userId = Auth::id();
-        if (!$userId) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        $user = Auth::user();
+        Log::info('STORE METHOD - User:', ['user' => $user]);
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized - User Not Found'], 401);
+        }
+
+        $existingCategory = Category::where('name', $categoryDTO->name)->first();
+        if ($existingCategory) {
+            return response()->json([
+                'error' => 'Category name already exists',
+                'category' => $existingCategory
+            ], 409);
         }
 
         $category = new Category([
             'name' => $categoryDTO->name,
-            'user_id' => $userId,
+            'user_id' => $user->id,
         ]);
-        Log::info('Authenticated User ID:', ['user_id' => $userId]);
 
         $category->save();
         return response()->json($category, 201);
     }
+
+
 
 
 
