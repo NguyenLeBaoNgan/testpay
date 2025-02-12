@@ -79,4 +79,21 @@ class AccountController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Default account updated successfully']);
     }
+
+//     public function refundToUser($userId, $amount)
+// {
+//     $account = Account::where('user_id', $userId)
+//                       ->where('is_default', true)
+//                       ->first();
+
+//     if (!$account) {
+//         return response()->json(['message' => 'No default account found'], 400);
+//     }
+
+//     // Gửi tiền hoàn vào tài khoản user
+//     $response = $this->sendMoneyToAccount($account, $amount);
+
+//     return response()->json(['message' => 'Refund successful']);
+// }
+
 }

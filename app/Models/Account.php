@@ -18,6 +18,7 @@ class Account extends Model
         'account_number',
         'bank_name',
         'e_wallet_provider',
+        'gateway',
         'is_default',
     ];
 
