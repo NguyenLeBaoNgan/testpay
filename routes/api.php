@@ -58,8 +58,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Route::apiResource('categories', CategoryController::class);
     Route::get('/categories/search/{name}', [CategoryController::class, 'searchCategory']);
     Route::put('/categories/{id}', [CategoryController::class, 'update']);
-   Route::post('/categories', [CategoryController::class, 'store']);
-   Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
     Route::apiResource('products', ProductController::class);
     Route::post('/products/search', [ProductController::class, 'searchProduct']);
@@ -94,13 +94,13 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     Route::apiResource('orders', OrderController::class);
 });
 Route::apiResource('orders', OrderController::class)->middleware('auth:sanctum');
-Route::group([
-    'prefix' => '/sepay',
-    'as' => 'sepay.',
-    // 'middleware' => ['api'],
-], function () {
-    Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
-});
+// Route::group([
+//     'prefix' => '/sepay',
+//     'as' => 'sepay.',
+//     // 'middleware' => ['api'],
+// ], function () {
+//     Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
+// });
 
 Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
 Route::get('/revenue', [PaymentController::class, 'getMonthlyRevenue']);
