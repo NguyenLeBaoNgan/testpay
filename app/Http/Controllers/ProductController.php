@@ -39,6 +39,7 @@ class ProductController extends Controller
     }
     public function store(ProductDTO $productDTO)
     {
+        Log::info('📌 Bắt đầu tạo sản phẩm', ['request' => request()->all()]);
         $categoryIds = request()->input('category_id', []);
         if (!is_array($categoryIds)) {
             $categoryIds = [$categoryIds];
@@ -46,8 +47,11 @@ class ProductController extends Controller
 
         $userId = Auth::id();
         if (!$userId) {
+            Log::error('❌ Lỗi xác thực: Không tìm thấy user ID');
             return response()->json(['error' => 'Unauthorized'], 401);
         }
+        Log::info('✅ User xác thực thành công', ['user_id' => $userId]);
+        
         $testproduct = Product::where('name', $productDTO->name)->first();
         if ($testproduct) {
             return response()->json(['error' => 'Product already exists'], 409);

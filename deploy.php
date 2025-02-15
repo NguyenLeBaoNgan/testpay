@@ -15,9 +15,9 @@ add('writable_dirs', []);
 // Hosts
 
 host('103.20.96.114')
-    ->set('remote_user', 'root')
+    ->set('remote_user', 'deployer')
     ->set('ssh_multiplexing', false)
-    ->set('deploy_path', '/var/www/testpay');
+    ->set('deploy_path', '~/var/www/testpay');
 
 // Hooks
 

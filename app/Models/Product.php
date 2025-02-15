@@ -11,7 +11,7 @@ class Product extends Model
     use HasFactory;
     use HasUlids;
     protected $primaryKey = 'id';
-    protected $fillable = ['name', 'description', 'price', 'quantity', 'category_id', 'user_id' ,'image'];
+    protected $fillable = ['name', 'description', 'price', 'quantity',  'user_id' ,'image'];
 
     public function category()
     {
