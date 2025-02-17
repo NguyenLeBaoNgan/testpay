@@ -74,9 +74,9 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 // Route::post('products', [ProductController::class, 'store']);
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
 // Route::apiResource('products', ProductController::class);
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::apiResource('products', ProductController::class);
-});
+// Route::middleware(['auth:sanctum'])->group(function () {
+//     Route::apiResource('products', ProductController::class);
+// });
 
 // Route::apiResource('categories', CategoryController::class);
 Route::post('/check-stock', [OrderController::class, 'checkStock']);
