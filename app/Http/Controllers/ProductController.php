@@ -45,8 +45,7 @@ class ProductController extends Controller
             $categoryIds = [$categoryIds];
         }
 
-        // $userId = Auth::id();
-        $userId = Auth::user();
+        $userId = Auth::id();
         if (!$userId) {
             Log::error('❌ Lỗi xác thực: Không tìm thấy user ID');
             return response()->json(['error' => 'Unauthorized'], 401);
