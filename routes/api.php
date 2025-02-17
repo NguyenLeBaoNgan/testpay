@@ -64,7 +64,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::apiResource('products', ProductController::class);
     Route::post('/products/search', [ProductController::class, 'searchProduct']);
     // Route::get('products', [ProductController::class, 'index']);
-    Route::post('products', [ProductController::class, 'store']);
+    // Route::post('products', [ProductController::class, 'store']);
     // Route::get('products/{id}', [ProductController::class, 'show']);
     Route::post('products/{id}', [ProductController::class, 'update']);
     // Route::delete('products/{id}', [ProductController::class, 'destroy']);
