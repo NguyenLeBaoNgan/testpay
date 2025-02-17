@@ -71,8 +71,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 
 
 });
-Route::middleware('auth:sanctum')->post('/products', [ProductController::class, 'store']);
-
 // Route::post('products', [ProductController::class, 'store']);
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
 // Route::apiResource('products', ProductController::class);
