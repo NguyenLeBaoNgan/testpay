@@ -95,13 +95,13 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     Route::apiResource('orders', OrderController::class);
 });
 Route::apiResource('orders', OrderController::class)->middleware('auth:sanctum');
-Route::group([
-    'prefix' => '/sepay',
-    'as' => 'sepay.',
-    // 'middleware' => ['api'],
-], function () {
-    Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
-});
+// Route::group([
+//     'prefix' => '/sepay',
+//     'as' => 'sepay.',
+//     // 'middleware' => ['api'],
+// ], function () {
+//     Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
+// });
 
 Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
 Route::get('/revenue', [PaymentController::class, 'getMonthlyRevenue']);
