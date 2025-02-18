@@ -15,20 +15,25 @@ use App\Models\Payment;
 
 class SePayWebhookController extends Controller
 {
+    public function index()
+    {
+        return Transaction::all();
+    }
+    
     public function webhook(Request $request)
     {
         try {
             $data = $request->all();
             $transactionId = $data['referenceCode'] ?? null; // ID giao dịch từ webhook
             $content = $data['content'] ?? null;
-            $status = $data['status'] ?? null;
+            $status = $data['status'] ?? 'pending';
 
             Log::info('Webhook received', $request->all());
 
             // Lấy order_id từ content
             $orderId = $this->extractOrderId($content);
             Log::info('content', ['content' => $data['content']]);
-            if (!$transactionId || !$orderId ) {
+            if (!$transactionId || !$orderId) {
                 Log::error("Missing transaction ID or Order ID", ['transaction_id' => $transactionId, 'order_id' => $orderId, 'status' => $status]);
                 return response()->json(['error' => 'Transaction ID or Order ID is missing'], 400);
             }
@@ -42,7 +47,7 @@ class SePayWebhookController extends Controller
                 'transferType' => $data['transferType'],
                 'amount_in' => $data['transferAmount'] ?? 0,
                 'transactionContent' => $content,
-                'status' => $status,
+                'status' => $transactionStatus,
             ]);
 
             // Cập nhật transaction_id trong bảng payments
@@ -50,14 +55,14 @@ class SePayWebhookController extends Controller
             if ($payment) {
                 $payment->transaction_id = $transaction->id;
                 $payment->reference_number  = $transactionId;
-                $payment->payments_status = $paymentSuccess  ? 'completed' : 'failed';
+                $payment->payments_status = $paymentSuccess  ? 'paid' : 'completed';
                 $payment->save();
 
                 $order = $payment->order;
-            if ($order) {
-                $order->status = $paymentSuccess   ? 'paid' : 'cancelled'; // Cập nhật trạng thái đơn hàng
-                $order->save();
-            }
+                if ($order) {
+                    $order->status = $paymentSuccess   ? 'paid' : 'cancelled'; // Cập nhật trạng thái đơn hàng
+                    $order->save();
+                }
                 Log::info('Payment updated with transaction ID', [
                     'payment_id' => $payment->id,
                     'transaction_id' => $transaction->id,
@@ -83,8 +88,8 @@ class SePayWebhookController extends Controller
             return null;
         }
 
-        // Giả sử order_id nằm giữa chuỗi "-DH" và "-"
-        if (preg_match('/-DH(.*?)\-/', $content, $matches)) {
+        // Tìm kiếm "DH" theo sau là chuỗi ký tự, không có dấu "-"
+        if (preg_match('/DH([A-Za-z0-9]+)/', $content, $matches)) {
             return $matches[1] ?? null;
         }
 
@@ -112,74 +117,74 @@ class SePayWebhookController extends Controller
     }
 
 
-//     public function refund(TransactionDTO $transactionDTO)
-// {
-//     try {
-//         // Lấy thông tin giao dịch từ DTO
-//         $transactionId = $transactionDTO->transaction_id;
-//         $refundAmount = $transactionDTO->refund_amount;
-//         $reason = $transactionDTO->reason;
+    //     public function refund(TransactionDTO $transactionDTO)
+    // {
+    //     try {
+    //         // Lấy thông tin giao dịch từ DTO
+    //         $transactionId = $transactionDTO->transaction_id;
+    //         $refundAmount = $transactionDTO->refund_amount;
+    //         $reason = $transactionDTO->reason;
 
-//         // Tìm giao dịch bằng ULID
-//         $transaction = Transaction::where('transaction_ulid', $transactionId)->firstOrFail();
+    //         // Tìm giao dịch bằng ULID
+    //         $transaction = Transaction::where('transaction_ulid', $transactionId)->firstOrFail();
 
-//         // Kiểm tra trạng thái giao dịch
-//         if ($transaction->status !== 'success') {
-//             return response()->json(['error' => 'Transaction not eligible for refund'], 400);
-//         }
+    //         // Kiểm tra trạng thái giao dịch
+    //         if ($transaction->status !== 'success') {
+    //             return response()->json(['error' => 'Transaction not eligible for refund'], 400);
+    //         }
 
-//         // Kiểm tra số tiền hoàn lại
-//         if ($refundAmount > $transaction->amount_in) {
-//             return response()->json(['error' => 'Refund amount exceeds transaction amount'], 400);
-//         }
+    //         // Kiểm tra số tiền hoàn lại
+    //         if ($refundAmount > $transaction->amount_in) {
+    //             return response()->json(['error' => 'Refund amount exceeds transaction amount'], 400);
+    //         }
 
-//         // Lấy thông tin tài khoản khách hàng từ bảng Account
-//         $account = $transaction->account;
-//         if (!$account) {
-//             return response()->json(['error' => 'Customer account not found'], 404);
-//         }
+    //         // Lấy thông tin tài khoản khách hàng từ bảng Account
+    //         $account = $transaction->account;
+    //         if (!$account) {
+    //             return response()->json(['error' => 'Customer account not found'], 404);
+    //         }
 
-//         // Gửi yêu cầu hoàn tiền tới cổng thanh toán
-//         $response = $this->paymentGateway->refund(
-//             $transaction->transaction_ulid,
-//             $refundAmount,
-//             $reason,
-//             $account->account_number
-//         );
+    //         // Gửi yêu cầu hoàn tiền tới cổng thanh toán
+    //         $response = $this->paymentGateway->refund(
+    //             $transaction->transaction_ulid,
+    //             $refundAmount,
+    //             $reason,
+    //             $account->account_number
+    //         );
 
-//         if ($response['success']) {
+    //         if ($response['success']) {
 
-//             $transaction->refund_status = 'success';
-//             $transaction->refunded_amount = $refundAmount;
-//             $transaction->save();
+    //             $transaction->refund_status = 'success';
+    //             $transaction->refunded_amount = $refundAmount;
+    //             $transaction->save();
 
 
-//             Log::info("Refund successful", [
-//                 'transaction_id' => $transaction->transaction_ulid,
-//                 'refund_amount' => $refundAmount,
-//                 'reason' => $reason,
-//                 'customer_account' => $account->account_number
-//             ]);
+    //             Log::info("Refund successful", [
+    //                 'transaction_id' => $transaction->transaction_ulid,
+    //                 'refund_amount' => $refundAmount,
+    //                 'reason' => $reason,
+    //                 'customer_account' => $account->account_number
+    //             ]);
 
-//             return response()->json(['success' => true, 'message' => 'Refund successful']);
-//         } else {
+    //             return response()->json(['success' => true, 'message' => 'Refund successful']);
+    //         } else {
 
-//             Log::error("Refund failed", [
-//                 'transaction_id' => $transaction->transaction_ulid,
-//                 'error' => $response['message']
-//             ]);
+    //             Log::error("Refund failed", [
+    //                 'transaction_id' => $transaction->transaction_ulid,
+    //                 'error' => $response['message']
+    //             ]);
 
-//             return response()->json(['error' => 'Refund failed: ' . $response['message']], 400);
-//         }
-//     } catch (\Exception $e) {
+    //             return response()->json(['error' => 'Refund failed: ' . $response['message']], 400);
+    //         }
+    //     } catch (\Exception $e) {
 
-//         Log::error("Error during refund process", [
-//             'error' => $e->getMessage()
-//         ]);
+    //         Log::error("Error during refund process", [
+    //             'error' => $e->getMessage()
+    //         ]);
 
-//         return response()->json(['error' => 'Error processing refund'], 500);
-//     }
-// }
+    //         return response()->json(['error' => 'Error processing refund'], 500);
+    //     }
+    // }
 
 
 }
