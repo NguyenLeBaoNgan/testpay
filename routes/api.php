@@ -69,8 +69,6 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Route::get('products/{id}', [ProductController::class, 'show']);
     Route::post('products/{id}', [ProductController::class, 'update']);
     Route::delete('products/{id}', [ProductController::class, 'destroy']);
-
-
 });
 // Route::post('products', [ProductController::class, 'store']);
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
@@ -98,11 +96,11 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
 });
 Route::apiResource('orders', OrderController::class)->middleware('auth:sanctum');
 Route::group([
-    'prefix' => '/sepay',
-    'as' => 'sepay.',
+    'prefix' => 'sepay',
+    'as' => 'sepay',
     // 'middleware' => ['api'],
 ], function () {
-    Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
+    Route::post('/hook', [SePayWebhookController::class, 'webhook'])->name('hook');
 });
 
 Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
