@@ -12,6 +12,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SePayWebhookController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AuditLogController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
@@ -57,7 +58,7 @@ Route::get('/categories/{id}', [CategoryController::class, 'show']);
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Route::apiResource('categories', CategoryController::class);
     Route::get('/categories/search/{name}', [CategoryController::class, 'searchCategory']);
-    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::post('/categories/{id}', [CategoryController::class, 'update']);
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
@@ -67,12 +68,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // Route::post('products', [ProductController::class, 'store']);
     // Route::get('products/{id}', [ProductController::class, 'show']);
     Route::post('products/{id}', [ProductController::class, 'update']);
-    // Route::delete('products/{id}', [ProductController::class, 'destroy']);
+    Route::delete('products/{id}', [ProductController::class, 'destroy']);
 
 
 });
 // Route::post('products', [ProductController::class, 'store']);
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
+Route::post('/payments/{id}', [PaymentController::class, 'show'])->middleware('auth:sanctum');
 Route::apiResource('payments', PaymentController::class)->middleware('auth:sanctum');;
 // Route::apiResource('categories', CategoryController::class);
 Route::post('/check-stock', [OrderController::class, 'checkStock']);
@@ -89,22 +91,27 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
 // });
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     //     Route::post('orders', [OrderController::class, 'store']);
-    // Route::put('orders/{orderId}', [OrderController::class, 'update']);
-    // Route::get('orders/{orderId}', [OrderController::class, 'show']);
-    // Route::delete('orders/{orderId}', [OrderController::class, 'destroy']);
+    Route::post('orders/{orderId}', [OrderController::class, 'update']);
+    Route::get('orders/{orderId}', [OrderController::class, 'show']);
+    Route::delete('orders/{orderId}', [OrderController::class, 'destroy']);
     Route::apiResource('orders', OrderController::class);
 });
 Route::apiResource('orders', OrderController::class)->middleware('auth:sanctum');
-// Route::group([
-//     'prefix' => '/sepay',
-//     'as' => 'sepay.',
-//     // 'middleware' => ['api'],
-// ], function () {
-//     Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
-// });
+Route::group([
+    'prefix' => '/sepay',
+    'as' => 'sepay.',
+    // 'middleware' => ['api'],
+], function () {
+    Route::post('/webhook', [SePayWebhookController::class, 'webhook'])->name('webhook');
+});
 
 Route::get('/history', [OrderController::class, 'getOrderHistory'])->middleware('auth:sanctum');
 Route::get('/revenue', [PaymentController::class, 'getMonthlyRevenue']);
 
 Route::apiResource('accounts', AccountController::class)->middleware('auth:sanctum');
 Route::apiResource('/transactions', SePayWebhookController::class)->middleware('auth:sanctum');
+
+
+Route::get('/audit-logs', [AuditLogController::class, 'index']);
+
+Route::delete('/audit-logs', [AuditLogController::class, 'deleteAll']);

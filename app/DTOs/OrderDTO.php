@@ -12,7 +12,7 @@ class OrderDTO extends Data
         // public ?float $totalAmount,
         public ?string $totalAmount,
         public ?string $status,
-        public array $items
+        public ?array $items =[],
     ) {}
     // public static function fromArray(array $data, string $userId): self
     // {

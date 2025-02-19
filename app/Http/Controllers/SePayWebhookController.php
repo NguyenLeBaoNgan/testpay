@@ -19,7 +19,7 @@ class SePayWebhookController extends Controller
     {
         return Transaction::all();
     }
-    
+
     public function webhook(Request $request)
     {
         try {
@@ -55,12 +55,12 @@ class SePayWebhookController extends Controller
             if ($payment) {
                 $payment->transaction_id = $transaction->id;
                 $payment->reference_number  = $transactionId;
-                $payment->payments_status = $paymentSuccess  ? 'paid' : 'completed';
+                $payment->payments_status = $paymentSuccess  ? 'completed' : 'failed';
                 $payment->save();
 
                 $order = $payment->order;
                 if ($order) {
-                    $order->status = $paymentSuccess   ? 'paid' : 'cancelled'; // Cập nhật trạng thái đơn hàng
+                    $order->status = $paymentSuccess   ? 'Paid' : 'Cancelled';
                     $order->save();
                 }
                 Log::info('Payment updated with transaction ID', [

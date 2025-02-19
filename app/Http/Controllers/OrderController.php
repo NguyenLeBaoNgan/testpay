@@ -15,10 +15,30 @@ class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::with('user','items')->get();
-        // return Order::all();
-        return response()->json($orders);
+        $orders = Order::with(['user', 'items.product'])->get();
+
+        $orderitem = $orders->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'user' => $order->user->name ?? null,
+                'total_amount' => $order->total_amount,
+                'status' => $order->status,
+                'created_at' => $order->created_at,
+                'items' => $order->items->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'product_name' => $item->product->name ?? 'Unknown',
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                        'total' => $item->total,
+                    ];
+                }),
+            ];
+        });
+
+        return response()->json($orderitem);
     }
+
     public function store(OrderDTO $orderDTO)
     {
         $checkStockResponse = $this->checkStock($orderDTO);
@@ -97,7 +117,9 @@ class OrderController extends Controller
             return response()->json(['error' => 'Order not found'], 404);
         }
 
-        $order->status = $orderDTO->status ?? $order->status;
+        // $order->status = $orderDTO->status ?? $order->status;
+        $order->status = in_array($orderDTO->status, ['paid', 'unpaid', 'cancelled']) ? (string) $orderDTO->status : $order->status;
+
         $groupedItems = collect($orderDTO->items)->groupBy('product_id')->map(function ($items) {
             return [
                 'product_id' => $items->first()['product_id'],

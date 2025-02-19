@@ -27,6 +27,9 @@ class PaymentController extends Controller
         // return Payment::all();
         return Payment::with('paymentDetails')->get();
     }
+    public function show($id){
+        return Payment::with('paymentDetails')->find($id);
+    }
     protected $paymentService;
     public function __construct(PaymentService $paymentService)
     {
