@@ -11,6 +11,7 @@
         "laravel/tinker": "^2.9",
         "laravel/ui": "^4.5",
         "league/flysystem": "^3.29",
+        "pusher/pusher-php-server": "^7.2",
         "ramsey/uuid": "^4.7",
         "ramsey/uuid-doctrine": "^2.1",
         "saloonphp/saloon": "3.0",

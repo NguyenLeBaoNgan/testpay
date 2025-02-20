@@ -12,6 +12,8 @@ use App\Pipes\ValidateTransaction;
 use App\Pipes\SaveTransactionToDatabase;
 use Illuminate\Pipeline\Pipeline;
 use App\Models\Payment;
+use App\Events\PaymentUpdated;
+use Illuminate\Support\Facades\Event;
 
 class SePayWebhookController extends Controller
 {
@@ -73,7 +75,10 @@ class SePayWebhookController extends Controller
             } else {
                 Log::error("Payment not found for order_id", ['order_id' => $orderId]);
             }
-
+            broadcast(new PaymentUpdated($transactionId, $transactionStatus));
+            Event::listen(PaymentUpdated::class, function ($event) {
+                Log::info("🔥 Event PaymentUpdated được gửi đi", ['data' => $event->data]);
+            });
             return response()->json(['message' => 'Webhook processed successfully'], 200);
         } catch (\Exception $e) {
             Log::error("Error processing webhook", ['error' => $e->getMessage()]);
@@ -115,8 +120,6 @@ class SePayWebhookController extends Controller
 
         return false;
     }
-
-
     //     public function refund(TransactionDTO $transactionDTO)
     // {
     //     try {
