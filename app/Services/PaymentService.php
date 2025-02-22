@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Pipes\ValidateTransaction;
@@ -83,7 +84,7 @@ class PaymentService
         return $payment;
     }
 
-    // public function refund(string $transactionId, float $refundAmount, string $reason)
+
     // {
     //     try {
     //         $transaction = Transaction::where('transaction_id', $transactionId)->first();

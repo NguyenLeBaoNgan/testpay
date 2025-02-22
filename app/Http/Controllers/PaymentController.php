@@ -54,12 +54,25 @@ class PaymentController extends Controller
                 ], 404);
             }
 
+            // $existingPayment = Payment::where('order_id', $request->order_id)->first();
+            // if ($existingPayment) {
+            //     return response()->json([
+            //         'error' => true,
+            //         'message' => 'Payment already exists for this order'
+            //     ], 400);
+            // }
             $existingPayment = Payment::where('order_id', $request->order_id)->first();
             if ($existingPayment) {
+                $existingPayment->update([
+                    'method' => $request->method,
+                    'payment_status' => $request->payment_status,
+                    'referenceCode' => $request->referenceCode,
+                ]);
                 return response()->json([
-                    'error' => true,
-                    'message' => 'Payment already exists for this order'
-                ], 400);
+                    'success' => true,
+                    'message' => 'Payment updated successfully',
+                    'payment' => $existingPayment
+                ]);
             }
 
             $totalAmount = $order->total_amount;
@@ -90,7 +103,8 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Payment processed successfully',
-                'payment' => $payment
+                'payment' => $payment,
+                'transaction_id' => $payment->transaction_id
             ], 201);
         } catch (\Exception $e) {
             Log::error('Payment processing error', ['error' => $e->getMessage()]);

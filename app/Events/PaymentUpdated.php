@@ -36,7 +36,7 @@ class PaymentUpdated implements ShouldBroadcastNow
         Log::info("Đang phát event ", ['channel' => 'payments']);
         return new Channel('payments');
     }
-
+     
     public function broadcastAs()
     {
         return 'payment.updated';
