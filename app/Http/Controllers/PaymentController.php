@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use Exception;
 use Carbon\Carbon;
+use App\Models\Transaction;
 
 class PaymentController extends Controller
 {
@@ -27,7 +28,8 @@ class PaymentController extends Controller
         // return Payment::all();
         return Payment::with('paymentDetails')->get();
     }
-    public function show($id){
+    public function show($id)
+    {
         return Payment::with('paymentDetails')->find($id);
     }
     protected $paymentService;
@@ -138,10 +140,24 @@ class PaymentController extends Controller
                 ->groupBy('month')
                 ->orderBy('month')
                 ->get();
+            $monthlyTransactions = Transaction::whereYear('transaction_date', $year)
+                ->selectRaw('
+        MONTH(transaction_date) as month,
+        COALESCE(SUM(amount_in), 0) as amount_in,
+        COALESCE(SUM(amount_out), 0) as amount_out,
+        COUNT(*) as total_transactions,
+        COUNT(CASE WHEN amount_in > 0 THEN 1 END) as count_in,
+        COUNT(CASE WHEN amount_out > 0 THEN 1 END) as count_out
+    ')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+
 
             return response()->json([
                 'year' => $year,
                 'monthly_revenue' => $monthlyRevenue,
+                'monthly_transactions' => $monthlyTransactions->isEmpty() ? [] : $monthlyTransactions,
             ], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Error calculating monthly revenue', 'message' => $e->getMessage()], 500);

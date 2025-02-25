@@ -13,6 +13,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SePayWebhookController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\FeedbackController;
 
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
@@ -55,7 +56,11 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
 // Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 //ts
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+// Route::get('products', [ProductController::class, 'index']);
+
+
+//'auth:sanctum', 'role:admin|user'
+Route::middleware([])->group(function () {
     // Route::apiResource('categories', CategoryController::class);
     Route::get('/categories/search/{name}', [CategoryController::class, 'searchCategory']);
     Route::post('/categories/{id}', [CategoryController::class, 'update']);
@@ -113,3 +118,8 @@ Route::apiResource('/transactions', SePayWebhookController::class)->middleware('
 Route::get('/audit-logs', [AuditLogController::class, 'index']);
 
 Route::delete('/audit-logs', [AuditLogController::class, 'deleteAll']);
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/feedbacks', [FeedbackController::class, 'store']);
+    Route::get('/feedbacks/{productId}', [FeedbackController::class, 'index']);
+});
