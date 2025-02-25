@@ -29,11 +29,11 @@ class ProductController extends Controller
 
         $products = Product::with('category')->get();
 
-        $products->each(function ($product) {
-            $product->category->each(function ($category) {
-                $category->makeHidden('user_id');
-            });
-        });
+        // $products->each(function ($product) {
+        //     $product->category->each(function ($category) {
+        //         $category->makeHidden('user_id');
+        //     });
+        // });
 
         return response()->json($products);
     }

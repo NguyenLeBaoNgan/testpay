@@ -14,7 +14,7 @@ use App\Http\Controllers\SePayWebhookController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\FeedbackController;
-
+Route::get('products', [ProductController::class, 'index']);
 Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function () {
     // Route::get('/permissions', [PermissionController::class, 'index']);
     // Route::post('/permissions', [PermissionController::class, 'store']);
@@ -33,7 +33,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
 Route::post('/register', [UserController::class, 'register']);
 Route::post('/login', [UserController::class, 'login']);
 
-Route::get('/', [ProductController::class, 'index']);
+// Route::get('/', [ProductController::class, 'index']);
 Route::middleware('auth:sanctum')->post('/logout', [UserController::class, 'logout']);
 
 
@@ -56,7 +56,7 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/categories/{id}', [CategoryController::class, 'show']);
 // Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 //ts
-// Route::get('products', [ProductController::class, 'index']);
+
 
 
 //'auth:sanctum', 'role:admin|user'
@@ -67,8 +67,9 @@ Route::middleware([])->group(function () {
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
-    Route::apiResource('products', ProductController::class);
-    Route::post('/products/search', [ProductController::class, 'searchProduct']);
+
+    // Route::post('/products/search', [ProductController::class, 'searchProduct']);
+    // Route::apiResource('products', ProductController::class);
     // Route::get('products', [ProductController::class, 'index']);
     // Route::post('products', [ProductController::class, 'store']);
     // Route::get('products/{id}', [ProductController::class, 'show']);
