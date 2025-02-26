@@ -72,7 +72,7 @@ Route::middleware([])->group(function () {
     Route::apiResource('products', ProductController::class);
     // Route::get('products', [ProductController::class, 'index']);
     // Route::post('products', [ProductController::class, 'store']);
-    // Route::get('products/{id}', [ProductController::class, 'show']);
+    //Route::get('products/{id}', [ProductController::class, 'show']);
     // Route::post('products/{id}', [ProductController::class, 'update']);
     // Route::delete('products/{id}', [ProductController::class, 'destroy']);
 });
@@ -122,5 +122,8 @@ Route::delete('/audit-logs', [AuditLogController::class, 'deleteAll']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/feedbacks', [FeedbackController::class, 'store']);
-    Route::get('/feedbacks/{productId}', [FeedbackController::class, 'index']);
 });
+Route::get('/feedbacks/{productId}', [FeedbackController::class, 'index']);
+
+
+Route::post('/feedbacks/batch', [FeedbackController::class, 'batch']);

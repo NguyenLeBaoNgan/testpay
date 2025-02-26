@@ -49,6 +49,24 @@ class FeedbackController extends Controller
     public function index($productId)
     {
         $feedbacks = $this->feedbackService->getFBByProduct($productId);
+        //  $averageRating = $this->feedbackService->getAverageRating($productId);
         return response()->json($feedbacks);
+    }
+    public function batch(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'productIds' => 'required|array|min:1',
+                'productIds.*' => 'required|string|ulid|exists:products,id',
+            ]);
+
+            $productIds = $validated['productIds'];
+
+            $ratings = $this->feedbackService->getBatchAverageRatings($productIds);
+
+            return response()->json($ratings);
+        } catch (ValidationException $e) {
+            return response()->json(['errors' => $e->errors()], 422);
+        }
     }
 }
