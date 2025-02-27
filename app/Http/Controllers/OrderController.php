@@ -48,6 +48,10 @@ class OrderController extends Controller
         $totalAmount = 0;
         $userId = auth()->id();
 
+        if(!$userId){
+            return response()->json(['success'=>false,'message' => 'Log in to create an order'], 401);
+        }
+
         $order = Order::create([
             // 'id' => (string) Str::ulid(),
             'user_id' => $userId,
@@ -66,6 +70,7 @@ class OrderController extends Controller
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'price' => $priceitem,
+           //         'name' => $product->name,
                 ]);
                 $totalAmount += $itemTotal;
             }
@@ -247,52 +252,68 @@ class OrderController extends Controller
     public function getOrderHistory()
     {
         $userId = auth()->id();
-        Log::debug('User ID: ' . $userId);
+
         $perPage = request()->query('perPage', 10);
 
-        // $orders = Order::where('user_id', $userId)->get();
-        $orders = Order::where('user_id', $userId)->paginate($perPage);
-        Log::debug('Total Orders: ' . $orders->count());
-        $orderHistory = [];
+        // Lấy đơn hàng với items, payment, và payment_details
+        $orders = Order::where('user_id', $userId)
+            ->with([
+                'items.product' => function ($query) {
+                    $query->select('id', 'name');
+                },
+                'payment.paymentDetails' => function ($query) {
+                    $query->select('payment_id', 'phone', 'email', 'address', 'note');
+                }
+            ])
+            ->orderBy('created_at', 'desc') // Đơn mới nhất lên đầu
+            ->paginate($perPage);
 
-        foreach ($orders as $order) {
-            $items = [];
+        Log::debug('User ID: ' . $userId);
+        Log::debug('Total Orders: ' . $orders->total());
 
-            // Lấy danh sách các items từ order và tạo DTO cho từng item
-            foreach ($order->items as $item) {
-                $product = Product::find($item->product_id);
+        $orderHistory = $orders->getCollection()->map(function ($order) {
+            $items = $order->items->map(function ($item) {
                 $product = $item->product;
                 $quantity = is_numeric($item->quantity) ? (int)$item->quantity : 0;
-                $items[] = new OrderItemDTO(
-                    $product->id,
-                    $quantity,
-                    $item->price,
-                    $product->name,
 
-                );
                 Log::debug('Item Quantity: ' . json_encode($item->quantity));
 
-                // $items[] = new OrderItemDTO(
-                //     $product->id,
-                //     $product->name,
+                return new OrderItemDTO(
+                    $product->id,
+                    $quantity,
+                    (string) $item->price,
+                    $product->name ?? 'Unknown Product'
+                );
+            })->all();
 
-                //     $item->price,
-                //     (int)$item->quantity,
-                //     $item->total
-                // );
-            }
+            // Lấy thông tin từ payment và payment_details
+            $payment = $order->payment;
+            $paymentDetails = $payment ? $payment->paymentDetails : null;
 
-
-            // Thêm thông tin order vào mảng history
-            $orderHistory[] = [
-
+            return [
                 'order_id' => $order->id,
-                'total_amount' => $order->total_amount,
+                'total_amount' => (string) $order->total_amount,
                 'status' => $order->status,
                 'items' => $items,
-                'created_at' => $order->created_at->toDateString(),
+                'created_at' => $order->created_at->toDateTimeString(),
+                'payment' => $payment
+                    ? [
+                        'method' => $payment->method,
+                        'payment_status' => $payment->payments_status,
+                        'transaction_id' => $payment->transaction_id,
+                    ]
+                    : null,
+                'payment_details' => $paymentDetails
+                    ? [
+                        'phone' => $paymentDetails->phone,
+                        'email' => $paymentDetails->email,
+                        'address' => $paymentDetails->address,
+                        'note' => $paymentDetails->note,
+                    ]
+                    : null,
             ];
-        }
+        })->all();
+
         Log::debug('Order History: ', $orderHistory);
 
         return response()->json([

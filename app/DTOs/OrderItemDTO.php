@@ -10,7 +10,7 @@ class OrderItemDTO extends Data
         public string $productId,
         public int $quantity,
         public string $price,
-        // public string $name,
+         public string $name,
     ) {}
 
     public static function fromArray(array $data): self
@@ -19,7 +19,7 @@ class OrderItemDTO extends Data
             productId: $data['product_id'],
             quantity: $data['quantity'],
             price: $data['price'] ?? '0',
-            // name: $data['name'],
+             name: $data['name']?? '0',
         );
     }
     public function getCartQuantity(): int

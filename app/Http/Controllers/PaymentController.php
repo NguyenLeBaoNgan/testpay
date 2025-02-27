@@ -63,13 +63,32 @@ class PaymentController extends Controller
             //         'message' => 'Payment already exists for this order'
             //     ], 400);
             // }
+            $validMethods = ['bank_transfer', 'cash_on_delivery'];
+            if (!in_array($request->method, $validMethods)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment method'
+                ], 400);
+            }
+            $validPaymentStatuses = ['pending', 'completed', 'cancelled'];
+            $paymentStatus = $request->payment_status ?? 'pending';
+            if (!in_array($paymentStatus, $validPaymentStatuses)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid payment status'
+                ], 400);
+            }
+
             $existingPayment = Payment::where('order_id', $request->order_id)->first();
             if ($existingPayment) {
                 $existingPayment->update([
                     'method' => $request->method,
-                    'payment_status' => $request->payment_status,
+                    'payment_status' => $paymentStatus,
                     'referenceCode' => $request->referenceCode,
                 ]);
+                //đồng bộ
+                $this->syncOrderStatus($order, $existingPayment->payment_status);
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Payment updated successfully',
@@ -83,7 +102,7 @@ class PaymentController extends Controller
             $paymentDTO = new PaymentDTO(
                 $request->order_id,
                 $request->method,
-                $request->payment_status,
+                $paymentStatus,
                 $totalAmount,
                 $request->referenceCode ?? null
             );
@@ -98,6 +117,9 @@ class PaymentController extends Controller
             // Process Payment
             $payment = $this->paymentService->processPayment($paymentDTO, $paymentDetailDTO);
             Log::info('Payment successfully created', ['payment_id' => $payment->id]);
+
+
+            $this->syncOrderStatus($order, $payment->payment_status??'pending');
 
             // Update product stock
             $this->updateProductStock($order);
@@ -116,7 +138,22 @@ class PaymentController extends Controller
             ], 500);
         }
     }
-
+    private function syncOrderStatus(Order $order, string $paymentStatus): void
+    {
+        switch ($paymentStatus) {
+            case 'pending':
+                if ($order->status === 'unpaid') {
+                $order->update(['status' => 'unpaid']);
+                }
+                break;
+            case 'completed':
+                $order->update(['status' => 'paid']);
+                break;
+            case 'cancelled':
+                $order->update(['status' => 'cancelled']);
+                break;
+        }
+    }
 
     public function updateProductStock($order)
     {

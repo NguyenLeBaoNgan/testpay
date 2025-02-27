@@ -14,6 +14,7 @@ use Illuminate\Pipeline\Pipeline;
 use App\Models\Payment;
 use App\Events\PaymentUpdated;
 use Illuminate\Support\Facades\Event;
+use App\Models\Order;
 
 class SePayWebhookController extends Controller
 {
@@ -39,8 +40,12 @@ class SePayWebhookController extends Controller
                 Log::error("Missing transaction ID or Order ID", ['transaction_id' => $transactionId, 'order_id' => $orderId, 'status' => $status]);
                 return response()->json(['error' => 'Transaction ID or Order ID is missing'], 400);
             }
-            $paymentSuccess = $this->isPaymentSuccessful($content, $status);
+            $paymentSuccess = $this->isPaymentSuccessful($content, $status, $orderId);
             $transactionStatus = $paymentSuccess ? 'completed' : 'pending';
+            Log::info('Payment success determined', [
+                'payment_success' => $paymentSuccess,
+                'transaction_status' => $transactionStatus
+            ]);
             // Tạo transaction mới
             $transaction = Transaction::create([
                 'transaction_id' => $transactionId,
@@ -62,7 +67,7 @@ class SePayWebhookController extends Controller
 
                 $order = $payment->order;
                 if ($order) {
-                    $order->status = $paymentSuccess   ? 'Paid' : 'Cancelled';
+                    $order->status = $paymentSuccess   ? 'paid' : 'unpaid';
                     $order->save();
                 }
                 Log::info('Payment updated with transaction ID', [
@@ -75,7 +80,7 @@ class SePayWebhookController extends Controller
             } else {
                 Log::error("Payment not found for order_id", ['order_id' => $orderId]);
             }
-            broadcast(new PaymentUpdated($transactionId, $transactionStatus));
+            broadcast(new PaymentUpdated($transactionId, $transactionStatus ? 'completed' : 'cancelled'));
             Event::listen(PaymentUpdated::class, function ($event) {
                 Log::info("🔥 Event PaymentUpdated được gửi đi", ['data' => $event->data]);
             });
@@ -101,14 +106,20 @@ class SePayWebhookController extends Controller
         return null;
     }
 
-    private function isPaymentSuccessful($content, $status)
+    private function isPaymentSuccessful($content, $status, $orderId)
     {
-
+        $order = Order::find($orderId);
+        if (!$order) {
+            return false;
+        }
         if ($status === 'completed') {
             return true;
         }
 
-
+        $transferAmount = $data['transferAmount'] ?? 0;
+        if ($transferAmount >= $order->total_amount) {
+            return true;
+        }
         if ($content) {
             $keywords = ['CHUYEN TIEN', 'PAYMENT', 'THANH TOAN'];
             foreach ($keywords as $keyword) {

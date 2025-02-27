@@ -39,7 +39,7 @@ class PaymentService
         $payment = Payment::create([
             'order_id' => $paymentDTO->order_id,
             'method' => $paymentDTO->method,
-            'payment_status' => $paymentDTO->payment_status,
+            'payment_status' => $paymentDTO->payment_status ?? 'pending',
             'payment_amount' => $paymentDTO->payment_amount,
             'transaction_id' => $paymentDTO->transaction_id,
         ]);
@@ -55,18 +55,18 @@ class PaymentService
 
         switch ($paymentDTO->payment_status) {
             case 'succeeded':
-                $payment->update(['status' => 'success']);
+                $payment->update(['payment_status' => 'success']);
                 $order->update(['status' => 'paid']);
                 break;
 
             case 'failed':
-                $payment->update(['status' => 'failed']);
+                $payment->update(['payment_status' => 'failed']);
                 $order->update(['status' => 'cancelled']);
                 break;
 
             case 'refunded':
                 if ($order->status === 'paid') {
-                    $payment->update(['status' => 'refunded']);
+                    $payment->update(['payment_status' => 'refunded']);
                     $order->update(['status' => 'refunded']);
                 } else {
                     throw new \Exception('Cannot refund an order that has not been paid.');
