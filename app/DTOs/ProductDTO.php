@@ -22,6 +22,7 @@ class ProductDTO extends Data
         public ?array $category_id = [],
         public ?string $user_id,
         public ?UploadedFile  $image,
+
     ) {
 
         $this->category_id = is_array($this->category_id)
