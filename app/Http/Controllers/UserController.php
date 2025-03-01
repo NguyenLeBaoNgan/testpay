@@ -185,8 +185,15 @@ class UserController extends Controller
         }
 
         $user = User::where('email', $userDTO->email)->firstOrFail();
-        $token = $user->createToken('auth_token')->plainTextToken;
+         $token = $user->createToken('auth_token')->plainTextToken;
+    //     $tokenResult = $user->createToken('auth_token');
+    // $token = $tokenResult->plainTextToken;
         $roles = $user->roles->pluck('name')->toArray();
+        // Log::info('Token created', [
+        //     'token' => $token,
+        //     'stored_in_db' => $tokenResult->accessToken->exists,
+        //     'token_id' => $tokenResult->accessToken->id
+        // ]);
         return response()->json([
             'token' => $token,
             'role' => $roles,

@@ -26,7 +26,7 @@ class CategoryController extends Controller
     {
         $user = Auth::user();
         Log::info('STORE METHOD - User:', ['user' => $user]);
-
+        Log::info('Bearer Token:', ['token' => request()->bearerToken()]);
         if (!$user) {
             return response()->json(['error' => 'Unauthorized - User Not Found'], 401);
         }

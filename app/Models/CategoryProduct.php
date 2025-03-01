@@ -1,5 +1,6 @@
 <?php
 
+namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -11,7 +12,7 @@ class CategoryProduct extends Model
     use HasUlids;
     protected $primaryKey = 'id';
     protected $table = 'category_product';
-    protected $fillable = ['category_id', 'product_id'];
+    protected $fillable = ['id','category_id', 'product_id'];
 
     protected static function booted()
     {

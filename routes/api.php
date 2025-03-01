@@ -41,6 +41,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/user/{id}', [UserController::class, 'show']);
     Route::put('/users', [UserController::class, 'update']);
+    Route::post('/users', [UserController::class, 'store']);
 });
 
 Route::middleware(['auth:sanctum', 'role:admin|super-admin'])->group(function () {
@@ -60,7 +61,7 @@ Route::get('/categories/{id}', [CategoryController::class, 'show']);
 
 
 //'auth:sanctum', 'role:admin|user'
-Route::middleware([])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     // Route::apiResource('categories', CategoryController::class);
     Route::get('/categories/search/{name}', [CategoryController::class, 'searchCategory']);
     Route::post('/categories/{id}', [CategoryController::class, 'update']);
@@ -72,9 +73,9 @@ Route::middleware([])->group(function () {
     Route::apiResource('products', ProductController::class);
     // Route::get('products', [ProductController::class, 'index']);
     // Route::post('products', [ProductController::class, 'store']);
-    //Route::get('products/{id}', [ProductController::class, 'show']);
-    // Route::post('products/{id}', [ProductController::class, 'update']);
-    // Route::delete('products/{id}', [ProductController::class, 'destroy']);
+    Route::get('products/{id}', [ProductController::class, 'show']);
+    Route::post('products/{id}', [ProductController::class, 'update']);
+    Route::delete('products/{id}', [ProductController::class, 'destroy']);
 });
 // Route::post('products', [ProductController::class, 'store']);
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
@@ -127,3 +128,7 @@ Route::get('/feedbacks/{productId}', [FeedbackController::class, 'index']);
 
 
 Route::post('/feedbacks/batch', [FeedbackController::class, 'batch']);
+
+Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
+    return response()->json(['user' => $request->user()]);
+});
