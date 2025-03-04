@@ -52,9 +52,9 @@ Route::middleware(['auth:sanctum', 'role:admin|super-admin'])->group(function ()
 });
 Route::middleware(['auth:sanctum', 'role:super-admin'])->put('/user/{id}/permissions', [PermissionController::class, 'update']);
 Route::put('/categories/{id}', [CategoryController::class, 'update']);
-Route::post('/categories', [CategoryController::class, 'store']);
-Route::get('/categories', [CategoryController::class, 'index']);
-Route::get('/categories/{id}', [CategoryController::class, 'show']);
+// Route::post('/categories', [CategoryController::class, 'store']);
+// Route::get('/categories', [CategoryController::class, 'index']);
+// Route::get('/categories/{id}', [CategoryController::class, 'show']);
 // Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 //ts
 
@@ -76,10 +76,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('products/{id}', [ProductController::class, 'show']);
     Route::post('products/{id}', [ProductController::class, 'update']);
     Route::delete('products/{id}', [ProductController::class, 'destroy']);
+
+    Route::delete('/payments/{id}', [PaymentController::class, 'destroy']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
+Route::post('/cancel/{id}', [PaymentController::class, 'cancel']);
+
 });
 // Route::post('products', [ProductController::class, 'store']);
 Route::post('/payments', [PaymentController::class, 'store'])->middleware('auth:sanctum');
 Route::post('/payments/{id}', [PaymentController::class, 'show'])->middleware('auth:sanctum');
+Route::post('/payments/{id}', [PaymentController::class, 'update'])->middleware('auth:sanctum');
 Route::apiResource('payments', PaymentController::class)->middleware('auth:sanctum');;
 // Route::apiResource('categories', CategoryController::class);
 Route::post('/check-stock', [OrderController::class, 'checkStock']);
@@ -129,6 +136,6 @@ Route::get('/feedbacks/{productId}', [FeedbackController::class, 'index']);
 
 Route::post('/feedbacks/batch', [FeedbackController::class, 'batch']);
 
-Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
-    return response()->json(['user' => $request->user()]);
-});
+// Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
+//     return response()->json(['user' => $request->user()]);
+// });

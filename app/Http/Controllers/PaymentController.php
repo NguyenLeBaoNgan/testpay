@@ -36,6 +36,7 @@ class PaymentController extends Controller
     public function __construct(PaymentService $paymentService)
     {
         $this->paymentService = $paymentService;
+        $this->middleware('role:admin')->only('update','destroy');
     }
 
     public function store(Request $request)
@@ -87,7 +88,8 @@ class PaymentController extends Controller
                     'referenceCode' => $request->referenceCode,
                 ]);
                 //đồng bộ
-                $this->syncOrderStatus($order, $existingPayment->payment_status);
+                $existingPayment->refresh();
+                $this->syncOrderStatus($order, $existingPayment->payment_status ??'pending');
 
                 return response()->json([
                     'success' => true,
@@ -152,6 +154,9 @@ class PaymentController extends Controller
             case 'cancelled':
                 $order->update(['status' => 'cancelled']);
                 break;
+                case 'failed':
+                    $order->update(['status' => 'cancelled']);
+                    break;
         }
     }
 
@@ -200,21 +205,129 @@ class PaymentController extends Controller
             return response()->json(['error' => 'Error calculating monthly revenue', 'message' => $e->getMessage()], 500);
         }
     }
+    public function cancel($order_id)
+{
+    try {
+        $order = Order::find($order_id);
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Order not found'], 404);
+        }
 
-    // public function cancelPayment($paymentId)
-    // {
-    //     $payment = Payment::find($paymentId);
+        $payment = Payment::where('order_id', $order_id)->first();
+        if (!$payment) {
+            return response()->json(['success' => false, 'message' => 'Payment not found'], 404);
+        }
 
-    //     if (!$payment || $payment->payments_status !== 'pending') {
-    //         return response()->json(['error' => 'Payment not found or already processed'], 404);
-    //     }
+        Log::info('Attempting to cancel payment', [
+            'order_id' => $order_id,
+            'method' => $payment->method,
+            'payment_status' => $payment->payments_status,
+        ]);
 
-    //     $payment->update([
-    //         'payments_status' => 'canceled',
-    //     ]);
+        if ($payment->payments_status !== 'pending' || $payment->method !== 'cash_on_delivery') {
+            Log::info('Cancellation rejected', [
+                'order_id' => $order_id,
+                'reason' => 'Not pending or not COD'
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot cancel this payment. Only pending COD payments can be cancelled.'
+            ], 400);
+        }
 
-    //     Log::info('Payment canceled', ['payment_id' => $paymentId]);
+        $payment->update(['payments_status' => 'cancelled']);
+        $payment->refresh(); // Làm mới để lấy giá trị mới từ database
+        Log::info('Payment status updated', [
+            'order_id' => $order_id,
+            'new_payment_status' => $payment->payments_status,
+        ]);
 
-    //     return response()->json(['message' => 'Payment canceled successfully'], 200);
-    // }
+        $this->syncOrderStatus($order, 'cancelled');
+        Log::info('Order status synced', [
+            'order_id' => $order_id,
+            'new_order_status' => $order->status,
+        ]);
+
+        Log::info('Payment cancelled successfully', [
+            'order_id' => $order_id,
+            'payment_status' => $payment->payments_status,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment and order cancelled successfully'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error cancelling payment', ['error' => $e->getMessage()]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to cancel payment: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+public function update(Request $request, $id)
+{
+    try {
+        $payment = Payment::findOrFail($id);
+        $validPaymentStatuses = ['pending', 'completed', 'cancelled', 'failed'];
+
+        $validated = $request->validate([
+            'payment_status' => 'required|in:' . implode(',', $validPaymentStatuses),
+        ]);
+
+        $payment->update([
+            'payments_status' => $validated['payment_status'], // Sửa tên cột
+            'updated_at' => Carbon::now(),
+        ]);
+
+        $payment->refresh();
+
+        $order = Order::find($payment->order_id);
+        if ($order) {
+            $this->syncOrderStatus($order, $validated['payment_status']);
+        }
+
+        Log::info('Payment status updated', [
+            'payment_id' => $payment->id,
+            'new_status' => $validated['payment_status'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment status updated successfully',
+            'payment' => $payment->load('paymentDetails'),
+        ], 200);
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return response()->json([
+            'error' => true,
+            'message' => $e->validator->errors()->first(),
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error('Payment status update failed', ['error' => $e->getMessage()]);
+        return response()->json([
+            'error' => true,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+public function destroy($id)
+{
+    try {
+        $payment = Payment::findOrFail($id);
+        $payment->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment deleted successfully',
+        ], 200);
+    } catch (\Exception $e) {
+        Log::error('Payment deletion failed', ['error' => $e->getMessage()]);
+        return response()->json([
+            'error' => true,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
 }
