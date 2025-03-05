@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use App\DTOs\UserDTO;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -19,23 +20,40 @@ class UserController extends Controller
 
         return response()->json($user);
     }
-    public function getalluser()
-    {
-        $users = User::with('roles')->get()->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'roles' => $user->roles->pluck('name'),
-                'status' => $user->status,
-            ];
-        });
-
+    public function getalluser(Request $request)
+{
+    \Log::info('Search query received:', ['search' => $request->query('search')]);
+    $search = $request->query('search');
+    if ($search) {
+        $users = User::where('name', 'like', "%$search%")
+            ->orWhere('email', 'like', "%$search%")
+            ->with('roles')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => $user->roles->pluck('name'),
+                    'status' => $user->status,
+                ];
+            });
+        \Log::info('Search results:', $users->toArray());
         return response()->json($users);
-        // return response()->json($users);
-        // return User::all();
     }
+    $users = User::with('roles')->get()->map(function ($user) {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'roles' => $user->roles->pluck('name'),
+            'status' => $user->status,
+        ];
+    });
 
+    \Log::info('All users:', $users->toArray());
+    return response()->json($users);
+}
     public function store(UserDTO $userDTO)
     {
         $user = User::create([

@@ -6,7 +6,7 @@ use App\Models\Category;
 use App\DTOs\CategoryDTO;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-
+use Illuminate\Http\Request;
 class CategoryController extends Controller
 {
     // public function index()
@@ -15,10 +15,14 @@ class CategoryController extends Controller
     //     return response()->json($categories);
     // }
 
-    public function index()
+    public function index(Request $request)
     {
         Auth::id();
-
+        $search = $request->query('search');
+        if ($search) {
+            $categories = Category::where('name', 'like', "%$search%")->get();
+            return response()->json($categories);
+        }
         return Category::all();
     }
 

@@ -97,7 +97,6 @@ class ProductController extends Controller
 
         return response()->json($product);
     }
-    // public function update(ProductDTO $productDTO, $id)
 
 
     public function update(ProductDTO $productDTO, $id)
