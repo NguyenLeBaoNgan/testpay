@@ -105,6 +105,7 @@ Route::middleware(['auth:sanctum', 'role:super-admin|admin'])->group(function ()
     //     Route::post('orders', [OrderController::class, 'store']);
     Route::post('orders/{orderId}', [OrderController::class, 'update']);
     Route::get('orders/{orderId}', [OrderController::class, 'show']);
+    //Route::put('orders/{orderId}', [OrderController::class, 'adminUpdate']);
     Route::delete('orders/{orderId}', [OrderController::class, 'destroy']);
     Route::apiResource('orders', OrderController::class);
 });
@@ -139,3 +140,4 @@ Route::post('/feedbacks/batch', [FeedbackController::class, 'batch']);
 // Route::middleware('auth:sanctum')->get('/test-auth', function (Request $request) {
 //     return response()->json(['user' => $request->user()]);
 // });
+Route::get('/top_selling', [OrderController::class, 'topSellingProducts'])->middleware('auth:sanctum');

@@ -399,6 +399,20 @@ class OrderController extends Controller
         // Trả về thông tin đơn hàng đã cập nhật
         return response()->json($order);
     }
+    public function topSellingProducts()
+    {
+        $topProducts = Product::select('products.id', 'products.name', 'products.image')
+            ->join('order_items', 'products.id', '=', 'order_items.product_id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.status', 'paid') 
+            ->selectRaw('(COUNT(DISTINCT orders.id) * 2 + SUM(order_items.quantity)) as ranking_score, COUNT(DISTINCT orders.id) as total_orders, SUM(order_items.quantity) as total_sold')
+            ->groupBy('products.id', 'products.name', 'products.image')
+            ->orderByDesc('ranking_score')
+            ->limit(5)
+            ->get();
+
+        return response()->json($topProducts);
+    }
 
     // public function syncCart(OrderDTO $orderDTO)
     // {
