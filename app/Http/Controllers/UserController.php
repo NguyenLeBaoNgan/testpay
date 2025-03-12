@@ -17,6 +17,7 @@ class UserController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
+        $user->load('roles');
 
         return response()->json($user);
     }
@@ -46,6 +47,7 @@ class UserController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'password' => $user->password,
             'roles' => $user->roles->pluck('name'),
             'status' => $user->status,
         ];

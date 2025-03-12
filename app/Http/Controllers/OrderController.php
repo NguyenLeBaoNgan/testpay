@@ -38,6 +38,61 @@ class OrderController extends Controller
 
         return response()->json($orderitem);
     }
+    //test
+    // public function store(OrderDTO $orderDTO)
+    // {
+    //     $checkStockResponse = $this->checkStock($orderDTO);
+    //     if ($checkStockResponse->getStatusCode() !== 200) {
+    //         return $checkStockResponse;
+    //     }
+
+    //     $totalAmount = 0;
+    //     $userId = auth()->id();
+
+    //     if (!$userId) {
+    //         return response()->json(['success' => false, 'message' => 'Log in to create an order'], 401);
+    //     }
+
+    //     // 🛑 Xóa tất cả các order Unpaid cũ của user trước khi tạo mới
+    //     Order::where('user_id', $userId)->where('status', 'Unpaid')->delete();
+
+    //     // 🔥 Tạo order mới đảm bảo chỉ có 1 order Unpaid duy nhất
+    //     $order = Order::create([
+    //         'user_id' => $userId,
+    //         'total_amount' => 0,
+    //         'status' => 'Unpaid',
+    //     ]);
+
+    //     Log::info('Created new order', ['order_id' => $order->id]);
+
+    //     // Cập nhật danh sách sản phẩm cho order
+    //     foreach ($orderDTO->items as $item) {
+    //         $orderItem = OrderItemDTO::fromArray($item);
+    //         $product = Product::find($item['product_id']);
+
+    //         if ($product) {
+    //             $itemTotal = $orderItem->quantity * $product->price;
+    //             OrderItem::create([
+    //                 'order_id' => $order->id,
+    //                 'product_id' => $product->id,
+    //                 'quantity' => $orderItem->quantity,
+    //                 'price' => $product->price,
+    //             ]);
+    //             $totalAmount += $itemTotal;
+    //         }
+    //     }
+
+    //     // Cập nhật tổng tiền của order
+    //     $order->update(['total_amount' => $totalAmount]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Đơn hàng đã được tạo thành công',
+    //         'order_id' => $order->id,
+    //         'total_amount' => $totalAmount
+    //     ]);
+    // }
+
 
     public function store(OrderDTO $orderDTO)
     {
@@ -404,7 +459,7 @@ class OrderController extends Controller
         $topProducts = Product::select('products.id', 'products.name', 'products.image')
             ->join('order_items', 'products.id', '=', 'order_items.product_id')
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
-            ->where('orders.status', 'paid') 
+            ->where('orders.status', 'paid')
             ->selectRaw('(COUNT(DISTINCT orders.id) * 2 + SUM(order_items.quantity)) as ranking_score, COUNT(DISTINCT orders.id) as total_orders, SUM(order_items.quantity) as total_sold')
             ->groupBy('products.id', 'products.name', 'products.image')
             ->orderByDesc('ranking_score')
