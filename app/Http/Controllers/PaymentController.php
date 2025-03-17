@@ -26,7 +26,9 @@ class PaymentController extends Controller
     public function index()
     {
         // return Payment::all();
-        return Payment::with('paymentDetails')->get();
+        return Payment::with('paymentDetails')
+        ->orderBy('created_at','desc')
+        ->get();
     }
     public function show($id)
     {

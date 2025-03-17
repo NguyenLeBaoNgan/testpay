@@ -20,7 +20,7 @@ class SePayWebhookController extends Controller
 {
     public function index()
     {
-        return Transaction::all();
+        return Transaction::orderBy('created_at', 'desc')->get();
     }
 
     public function webhook(Request $request)
@@ -50,7 +50,7 @@ class SePayWebhookController extends Controller
             $transaction = Transaction::create([
                 'transaction_id' => $transactionId,
                 'gateway' => $data['gateway'],
-                'accountNumber' => $data['accountNumber'],
+                'account_number' => $data['accountNumber'],
                 'transferType' => $data['transferType'],
                 'amount_in' => $data['transferAmount'] ?? 0,
                 'transactionContent' => $content,
