@@ -237,6 +237,18 @@ class PaymentController extends Controller
             ], 400);
         }
 
+        foreach ($order->items as $orderItem) {
+            $product = Product::find($orderItem->product_id);
+            if ($product) {
+                $product->increment('quantity', $orderItem->quantity);
+                Log::info("Updated product stock", [
+                    'product_id' => $product->id,
+                    'new_quantity' => $product->quantity
+                ]);
+            } else {
+                Log::error("Product not found", ['product_id' => $orderItem->product_id]);
+            }
+        }
         $payment->update(['payments_status' => 'cancelled']);
         $payment->refresh(); // Làm mới để lấy giá trị mới từ database
         Log::info('Payment status updated', [

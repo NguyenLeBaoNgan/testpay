@@ -246,6 +246,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json(['error' => 'Order not found'], 404);
         }
+        $order->items()->delete();
         $order->delete();
         return response()->json(['message' => 'Order deleted successfully']);
     }
